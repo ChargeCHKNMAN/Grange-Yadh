@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Timetable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 250px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        table {
+            margin: 0 auto 40px auto;
+            border-collapse: collapse;
+            width: 90%;
+            max-width: 700px;
+            background: white;
+            box-shadow: 0 0 10px #ccc;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px 8px;
+            font-size: 14px;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student Timetable</h1>
+    <form method="POST">
+        <input type="text" name="student_id" placeholder="Enter Student ID" required
+               value="{{ student_id }}">
+        <button type="submit">Show Timetable</button>
+    </form>
+
+    {% if timetable == "not_found" %}
+        <p class="error">Student ID not found. Please try again.</p>
+    {% elif timetable %}
+        <h2>Timetable for {{ student_id }}</h2>
+        {% for day, subjects in zip(days, timetable) %}
+            <h3>{{ day }}</h3>
+            <table>
+                <tr>
+                    {% for slot in time_slots %}
+                        <th>{{ slot }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for subject in subjects %}
+                        <td>{{ subject }}</td>
+                    {% endfor %}
+                </tr>
+            </table>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
