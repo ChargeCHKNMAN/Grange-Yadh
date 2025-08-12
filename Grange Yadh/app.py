@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Timetable with 6 time slots and class numbers
 student_timetables = {
     "SAY0023": [
         ["English (C3)", "English (C3)", "IT (B4)", "IT (B4)", "Business (C9)", "Business (C9)"],
@@ -41,7 +40,6 @@ student_timetables = {
     ]
 }
 
-# Days and updated time slots
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 time_slots = [
     "9:00 - 9:50",
@@ -52,21 +50,20 @@ time_slots = [
     "2:10 - 3:00"
 ]
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
-    student_id = ""
-    timetable = None
-    not_found = False
+    student_ids = list(student_timetables.keys())
+    selected_student = request.args.get("student_id", student_ids[0])  # default to first student if none selected
 
-    if request.method == "POST":
-        student_id = request.form.get("student_id", "").strip().upper()
-        timetable = student_timetables.get(student_id)
-        if timetable is None and student_id:
-            not_found = True
+    timetable_raw = student_timetables.get(selected_student)
+    not_found = timetable_raw is None
+
+    timetable = list(zip(days, timetable_raw)) if timetable_raw else []
 
     return render_template(
         "index.html",
-        student_id=student_id,
+        student_ids=student_ids,
+        selected_student=selected_student,
         timetable=timetable,
         not_found=not_found,
         days=days,
