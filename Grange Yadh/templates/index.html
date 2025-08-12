@@ -1,97 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Timetable Application</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Timetable with Reminders</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            text-align: center;
+            padding: 10px;
         }
         table {
             border-collapse: collapse;
-            margin-top: 20px;
-            width: 100%;
+            margin: 20px auto;
+            width: 95%;
         }
         th, td {
-            border: 1px solid #aaa;
+            border: 1px solid #333;
             padding: 8px;
-            text-align: center;
         }
         th {
-            background-color: #ddd;
+            background: #eee;
         }
-        .not-found {
-            color: red;
-            font-weight: bold;
+        .reminder {
+            margin-top: 20px;
+        }
+        label, select, input {
+            margin: 5px;
         }
     </style>
 </head>
 <body>
     <h1>Student Timetable</h1>
 
-    <form method="POST">
-        <label>Enter Student ID:</label>
-        <input type="text" name="student_id" value="{{ student_id }}">
-        <button type="submit">View Timetable</button>
+    <form method="GET" action="/">
+        <label for="student_id">Choose Student:</label>
+        <select name="student_id" id="student_id" onchange="this.form.submit()">
+            {% for id in student_ids %}
+            <option value="{{ id }}" {% if id == selected_student %}selected{% endif %}>{{ id }}</option>
+            {% endfor %}
+        </select>
     </form>
 
-    {% if not_found %}
-        <p class="not-found">No timetable found for ID: {{ student_id }}</p>
-    {% endif %}
-
-    {% if timetable %}
-        <table>
-            <tr>
-                <th>Time Slot</th>
-                {% for day in days %}
-                    <th>{{ day }}</th>
-                {% endfor %}
-            </tr>
-            {% for i, slot in enumerate(time_slots) %}
-                <tr>
-                    <td>{{ slot }}</td>
-                    {% for day_classes in timetable %}
-                        <td>{{ day_classes[i] }}</td>
-                    {% endfor %}
-                </tr>
+    <table>
+        <tr>
+            <th>Day / Time</th>
+            {% for time in time_slots %}
+            <th>{{ time }}</th>
             {% endfor %}
-        </table>
+        </tr>
+        {% for day, subjects in timetable %}
+        <tr>
+            <td>{{ day }}</td>
+            {% for subject in subjects %}
+            <td>{{ subject }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
 
-        <hr>
+    <div class="reminder">
+        <h2>Set a Class Reminder</h2>
+        <label for="reminderTime">Select Time:</label>
+        <input type="time" id="reminderTime">
+        <button type="button" onclick="setReminder()">Set Reminder</button>
+    </div>
 
-        <h2>Set a Reminder</h2>
-        <form id="reminderForm">
-            <label for="timeSlotSelect">Choose a time slot:</label>
-            <select id="timeSlotSelect" name="time_slot">
-                {% for slot in time_slots %}
-                    <option value="{{ slot }}">{{ slot }}</option>
-                {% endfor %}
-            </select>
-
-            <label for="reminderTime">Remind me in (seconds):</label>
-            <input type="number" id="reminderTime" min="1" value="10">
-
-            <button type="button" onclick="setReminder()">Set Reminder</button>
-        </form>
-
-        <p id="reminderMessage" style="color: green;"></p>
-
-        <script>
-            function setReminder() {
-                let slot = document.getElementById('timeSlotSelect').value;
-                let seconds = parseInt(document.getElementById('reminderTime').value);
-                let messageEl = document.getElementById('reminderMessage');
-
-                messageEl.textContent = `Reminder set for ${slot} in ${seconds} seconds.`;
-
-                setTimeout(() => {
-                    if (navigator.vibrate) {
-                        navigator.vibrate([500, 200, 500]);
-                    }
-                    alert(`Reminder: Your ${slot} class is starting soon!`);
-                }, seconds * 1000);
+    <script>
+        function setReminder() {
+            const timeInput = document.getElementById("reminderTime").value;
+            if (!timeInput) {
+                alert("Please select a time.");
+                return;
             }
-        </script>
-    {% endif %}
+
+            const [hour, minute] = timeInput.split(":").map(Number);
+            const now = new Date();
+            const reminderTime = new Date();
+            reminderTime.setHours(hour, minute, 0, 0);
+
+            if (reminderTime < now) {
+                reminderTime.setDate(reminderTime.getDate() + 1); // next day
+            }
+
+            const timeout = reminderTime - now;
+            alert(`Reminder set for ${timeInput}`);
+
+            setTimeout(() => {
+                if (navigator.vibrate) {
+                    navigator.vibrate([500, 200, 500]);
+                } else {
+                    alert("Reminder: It's time for your class!");
+                }
+            }, timeout);
+        }
+    </script>
 </body>
 </html>
