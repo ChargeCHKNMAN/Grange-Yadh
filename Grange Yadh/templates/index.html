@@ -1,14 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Student Timetable</title>
     <style>
-        table { border-collapse: collapse; width: 100%; }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #999; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        .error { color: red; margin-top: 20px; }
     </style>
 </head>
 <body>
     <h1>Student Timetable Lookup</h1>
+
     <form method="POST">
         <label for="student_id">Enter Student ID:</label>
         <input type="text" id="student_id" name="student_id" value="{{ student_id }}">
@@ -24,17 +28,17 @@
                     <th>{{ slot }}</th>
                 {% endfor %}
             </tr>
-            {% for day, row in zip(days, timetable) %}
+            {% for i in range(days|length) %}
                 <tr>
-                    <th>{{ day }}</th>
-                    {% for subject in row %}
+                    <th>{{ days[i] }}</th>
+                    {% for subject in timetable[i] %}
                         <td>{{ subject }}</td>
                     {% endfor %}
                 </tr>
             {% endfor %}
         </table>
     {% elif not_found %}
-        <p style="color:red;">Student ID "{{ student_id }}" not found.</p>
+        <p class="error">Student ID "{{ student_id }}" not found.</p>
     {% endif %}
 </body>
 </html>
