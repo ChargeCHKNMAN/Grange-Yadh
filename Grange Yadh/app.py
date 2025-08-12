@@ -2,52 +2,53 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Student timetables as a dictionary for easier lookup
+# Timetable with 6 time slots and class numbers
 student_timetables = {
     "SAY0023": [
-        ["Math", "English", "Science", "History", "PE"],
-        ["Biology", "Chemistry", "Math", "Art", "Music"],
-        ["English", "Math", "Geography", "PE", "Drama"],
-        ["History", "Science", "Math", "Music", "Art"],
-        ["Math", "PE", "Science", "English", "Art"]
+        ["Math (C101)", "English (C102)", "Science (C103)", "History (C104)", "PE (C105)", "Art (C106)"],
+        ["Biology (C107)", "Chemistry (C108)", "Math (C101)", "Art (C106)", "Music (C109)", "Drama (C110)"],
+        ["English (C102)", "Math (C101)", "Geography (C111)", "PE (C105)", "Drama (C110)", "Science (C103)"],
+        ["History (C104)", "Science (C103)", "Math (C101)", "Music (C109)", "Art (C106)", "English (C102)"],
+        ["Math (C101)", "PE (C105)", "Science (C103)", "English (C102)", "Art (C106)", "Music (C109)"]
     ],
     "BINH0031": [
-        ["Science", "Math", "English", "Art", "Music"],
-        ["Math", "History", "PE", "Drama", "Geography"],
-        ["English", "Art", "Science", "Math", "PE"],
-        ["Math", "English", "Science", "Music", "History"],
-        ["Drama", "Math", "Geography", "PE", "Art"]
+        ["Science (C103)", "Math (C101)", "English (C102)", "Art (C106)", "Music (C109)", "Drama (C110)"],
+        ["Math (C101)", "History (C104)", "PE (C105)", "Drama (C110)", "Geography (C111)", "Music (C109)"],
+        ["English (C102)", "Art (C106)", "Science (C103)", "Math (C101)", "PE (C105)", "Drama (C110)"],
+        ["Math (C101)", "English (C102)", "Science (C103)", "Music (C109)", "History (C104)", "PE (C105)"],
+        ["Drama (C110)", "Math (C101)", "Geography (C111)", "PE (C105)", "Art (C106)", "English (C102)"]
     ],
     "ULL0002": [
-        ["Art", "Math", "Music", "Science", "Drama"],
-        ["English", "PE", "Math", "History", "Art"],
-        ["Science", "Drama", "Math", "Music", "Geography"],
-        ["Math", "Science", "English", "PE", "Art"],
-        ["History", "Math", "Science", "Music", "Drama"]
+        ["Art (C106)", "Math (C101)", "Music (C109)", "Science (C103)", "Drama (C110)", "English (C102)"],
+        ["English (C102)", "PE (C105)", "Math (C101)", "History (C104)", "Art (C106)", "Music (C109)"],
+        ["Science (C103)", "Drama (C110)", "Math (C101)", "Music (C109)", "Geography (C111)", "PE (C105)"],
+        ["Math (C101)", "Science (C103)", "English (C102)", "PE (C105)", "Art (C106)", "Drama (C110)"],
+        ["History (C104)", "Math (C101)", "Science (C103)", "Music (C109)", "Drama (C110)", "English (C102)"]
     ],
     "SAD0006": [
-        ["Math", "Drama", "Science", "English", "Art"],
-        ["Music", "Math", "PE", "History", "Geography"],
-        ["Science", "English", "Math", "Art", "PE"],
-        ["History", "Math", "Science", "Drama", "Music"],
-        ["Art", "Math", "Music", "Science", "PE"]
+        ["Math (C101)", "Drama (C110)", "Science (C103)", "English (C102)", "Art (C106)", "Music (C109)"],
+        ["Music (C109)", "Math (C101)", "PE (C105)", "History (C104)", "Geography (C111)", "Science (C103)"],
+        ["Science (C103)", "English (C102)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
+        ["History (C104)", "Math (C101)", "Science (C103)", "Drama (C110)", "Music (C109)", "PE (C105)"],
+        ["Art (C106)", "Math (C101)", "Music (C109)", "Science (C103)", "PE (C105)", "English (C102)"]
     ],
     "JAS0006": [
-        ["Science", "Music", "Math", "Art", "PE"],
-        ["English", "Math", "Science", "Drama", "History"],
-        ["Music", "Art", "Math", "PE", "Science"],
-        ["Math", "Geography", "Science", "History", "Art"],
-        ["Drama", "Math", "Science", "Music", "PE"]
+        ["Science (C103)", "Music (C109)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
+        ["English (C102)", "Math (C101)", "Science (C103)", "Drama (C110)", "History (C104)", "Art (C106)"],
+        ["Music (C109)", "Art (C106)", "Math (C101)", "PE (C105)", "Science (C103)", "English (C102)"],
+        ["Math (C101)", "Geography (C111)", "Science (C103)", "History (C104)", "Art (C106)", "Drama (C110)"],
+        ["Drama (C110)", "Math (C101)", "Science (C103)", "Music (C109)", "PE (C105)", "English (C102)"]
     ]
 }
 
-# Days and time slots
+# Days and updated time slots
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 time_slots = [
     "9:00 - 9:50",
     "9:50 - 10:40",
     "11:00 - 11:50",
     "11:50 - 12:40",
+    "1:20 - 2:10",
     "2:10 - 3:00"
 ]
 
