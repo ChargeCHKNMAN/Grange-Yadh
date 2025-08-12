@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Student Timetable with Reminders</title>
     <style>
         body {
@@ -28,6 +28,11 @@
         label, select, input {
             margin: 5px;
         }
+        .not-found {
+            color: red;
+            margin-top: 15px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -42,27 +47,31 @@
         </select>
     </form>
 
-    <table>
-        <tr>
-            <th>Day / Time</th>
-            {% for time in time_slots %}
-            <th>{{ time }}</th>
+    {% if not_found %}
+        <div class="not-found">Student ID "{{ selected_student }}" not found.</div>
+    {% else %}
+        <table>
+            <tr>
+                <th>Day / Time</th>
+                {% for time in time_slots %}
+                <th>{{ time }}</th>
+                {% endfor %}
+            </tr>
+            {% for day, subjects in timetable %}
+            <tr>
+                <td>{{ day }}</td>
+                {% for subject in subjects %}
+                <td>{{ subject }}</td>
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-        {% for day, subjects in timetable %}
-        <tr>
-            <td>{{ day }}</td>
-            {% for subject in subjects %}
-            <td>{{ subject }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
+        </table>
+    {% endif %}
 
     <div class="reminder">
         <h2>Set a Class Reminder</h2>
         <label for="reminderTime">Select Time:</label>
-        <input type="time" id="reminderTime">
+        <input type="time" id="reminderTime" />
         <button type="button" onclick="setReminder()">Set Reminder</button>
     </div>
 
