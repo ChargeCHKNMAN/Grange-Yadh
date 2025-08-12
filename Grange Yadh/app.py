@@ -25,4 +25,47 @@ timetables = [
         ["Math", "PE", "Science", "English", "Art"]
     ],
     [  # BINH0031
-        ["Science"]()
+        ["Science", "Math", "English", "Art", "Music"],
+        ["Math", "History", "PE", "Drama", "Geography"],
+        ["English", "Art", "Science", "Math", "PE"],
+        ["Math", "English", "Science", "Music", "History"],
+        ["Drama", "Math", "Geography", "PE", "Art"]
+    ],
+    [  # ULL0002
+        ["Art", "Math", "Music", "Science", "Drama"],
+        ["English", "PE", "Math", "History", "Art"],
+        ["Science", "Drama", "Math", "Music", "Geography"],
+        ["Math", "Science", "English", "PE", "Art"],
+        ["History", "Math", "Science", "Music", "Drama"]
+    ],
+    [  # SAD0006
+        ["Math", "Drama", "Science", "English", "Art"],
+        ["Music", "Math", "PE", "History", "Geography"],
+        ["Science", "English", "Math", "Art", "PE"],
+        ["History", "Math", "Science", "Drama", "Music"],
+        ["Art", "Math", "Music", "Science", "PE"]
+    ],
+    [  # JAS0006
+        ["Science", "Music", "Math", "Art", "PE"],
+        ["English", "Math", "Science", "Drama", "History"],
+        ["Music", "Art", "Math", "PE", "Science"],
+        ["Math", "Geography", "Science", "History", "Art"],
+        ["Drama", "Math", "Science", "Music", "PE"]
+    ]
+]
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    timetable = None
+    student_id = ""
+    if request.method == "POST":
+        student_id = request.form["student_id"].strip().upper()
+        if student_id in student_ids:
+            idx = student_ids.index(student_id)
+            timetable = timetables[idx]
+        else:
+            timetable = "not_found"
+    return render_template("index.html", student_id=student_id, timetable=timetable, days=days, time_slots=time_slots)
+
+if __name__ == "__main__":
+    app.run(debug=True)
