@@ -25,7 +25,7 @@
         .reminder {
             margin-top: 20px;
         }
-        label, select, input {
+        label, input, button {
             margin: 5px;
         }
         .not-found {
@@ -33,18 +33,25 @@
             margin-top: 15px;
             font-weight: bold;
         }
+        .input-group {
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <h1>Student Timetable</h1>
 
-    <form method="GET" action="/">
-        <label for="student_id">Choose Student:</label>
-        <select name="student_id" id="student_id" onchange="this.form.submit()">
-            {% for id in student_ids %}
-            <option value="{{ id }}" {% if id == selected_student %}selected{% endif %}>{{ id }}</option>
-            {% endfor %}
-        </select>
+    <form method="GET" action="/" class="input-group">
+        <label for="student_id_input">Enter Student ID:</label>
+        <input 
+            type="text" 
+            id="student_id_input" 
+            name="student_id" 
+            value="{{ selected_student }}" 
+            placeholder="Enter student ID here" 
+            required
+        />
+        <button type="submit">Submit</button>
     </form>
 
     {% if not_found %}
