@@ -1,44 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student Timetable</title>
+    <title>Timetable Application</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #999; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
-        .error { color: red; margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #ddd;
+        }
+        .not-found {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h1>Student Timetable Lookup</h1>
+    <h1>Student Timetable</h1>
 
     <form method="POST">
-        <label for="student_id">Enter Student ID:</label>
-        <input type="text" id="student_id" name="student_id" value="{{ student_id }}">
-        <input type="submit" value="Search">
+        <label>Enter Student ID:</label>
+        <input type="text" name="student_id" value="{{ student_id }}">
+        <button type="submit">View Timetable</button>
     </form>
 
+    {% if not_found %}
+        <p class="not-found">No timetable found for ID: {{ student_id }}</p>
+    {% endif %}
+
     {% if timetable %}
-        <h2>Timetable for {{ student_id }}</h2>
         <table>
             <tr>
-                <th>Day / Time</th>
-                {% for slot in time_slots %}
-                    <th>{{ slot }}</th>
+                <th>Time Slot</th>
+                {% for day in days %}
+                    <th>{{ day }}</th>
                 {% endfor %}
             </tr>
-            {% for i in range(days|length) %}
+            {% for i, slot in enumerate(time_slots) %}
                 <tr>
-                    <th>{{ days[i] }}</th>
-                    {% for subject in timetable[i] %}
-                        <td>{{ subject }}</td>
+                    <td>{{ slot }}</td>
+                    {% for day_classes in timetable %}
+                        <td>{{ day_classes[i] }}</td>
                     {% endfor %}
                 </tr>
             {% endfor %}
         </table>
-    {% elif not_found %}
-        <p class="error">Student ID "{{ student_id }}" not found.</p>
+
+        <hr>
+
+        <h2>Set a Reminder</h2>
+        <form id="reminderForm">
+            <label for="timeSlotSelect">Choose a time slot:</label>
+            <select id="timeSlotSelect" name="time_slot">
+                {% for slot in time_slots %}
+                    <option value="{{ slot }}">{{ slot }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="reminderTime">Remind me in (seconds):</label>
+            <input type="number" id="reminderTime" min="1" value="10">
+
+            <button type="button" onclick="setReminder()">Set Reminder</button>
+        </form>
+
+        <p id="reminderMessage" style="color: green;"></p>
+
+        <script>
+            function setReminder() {
+                let slot = document.getElementById('timeSlotSelect').value;
+                let seconds = parseInt(document.getElementById('reminderTime').value);
+                let messageEl = document.getElementById('reminderMessage');
+
+                messageEl.textContent = `Reminder set for ${slot} in ${seconds} seconds.`;
+
+                setTimeout(() => {
+                    if (navigator.vibrate) {
+                        navigator.vibrate([500, 200, 500]);
+                    }
+                    alert(`Reminder: Your ${slot} class is starting soon!`);
+                }, seconds * 1000);
+            }
+        </script>
     {% endif %}
 </body>
 </html>
