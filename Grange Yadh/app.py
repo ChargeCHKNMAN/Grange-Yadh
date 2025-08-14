@@ -25,11 +25,11 @@ student_timetables = {
         ["History (C104)", "Math (C101)", "Science (C103)", "Music (C109)", "Drama (C110)", "English (C102)"]
     ],
     "SAD0006": [
-        ["Math (C101)", "Drama (C110)", "Science (C103)", "English (C102)", "Art (C106)", "Music (C109)"],
-        ["Music (C109)", "Math (C101)", "PE (C105)", "History (C104)", "Geography (C111)", "Science (C103)"],
-        ["Science (C103)", "English (C102)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
-        ["History (C104)", "Math (C101)", "Science (C103)", "Drama (C110)", "Music (C109)", "PE (C105)"],
-        ["Art (C106)", "Math (C101)", "Music (C109)", "Science (C103)", "PE (C105)", "English (C102)"]
+        ["English (C4)", "English (C4)", "IT (B4)", "IT (B4)", "History (C3)", "History (C3)"],
+        ["History (C3)", "Math (C10)", "Psychology (D8)", "Psychology (D8)", "IT (B4)", "English (C4)"],
+        ["Business (C2)", "Business (C2)", "Math (C10)", "Math (C10)", "Psychology (D8)", "Psychology (D8)"],
+        ["Business (C2)", "Psychology (E2)", "IT (B4)", "IT (B4)", "English (C4)", "English (C4)"],
+        ["History (C3)", "History (C3)", "Math (C10)", "Math (C10)", "Business (C2)", "Business (C2)"]
     ],
     "JAS0006": [
         ["Science (C103)", "Music (C109)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
@@ -70,3 +70,4 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
