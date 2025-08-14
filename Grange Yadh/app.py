@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import datetime
 
 app = Flask(__name__)
 
@@ -52,7 +53,7 @@ time_slots = [
 
 @app.route("/", methods=["GET"])
 def index():
-    student_ids = list(student_timetables.keys())
+    student_ids = list(student_timetables.keys())  # FIXED: Define before using
     selected_student = request.args.get("student_id", student_ids[0])
     timetable_raw = student_timetables.get(selected_student)
     not_found = timetable_raw is None
@@ -68,6 +69,13 @@ def index():
         time_slots=time_slots
     )
 
+@app.route("/set_reminder", methods=["POST"])
+def set_reminder():
+    slot = request.form.get("time_slot")
+    remind_time = request.form.get("remind_time")
+    # Log reminder to console (for now — real push would need phone app support)
+    print(f"Reminder set for slot {slot} at {remind_time}")
+    return f"Reminder set for {slot} at {remind_time}"
+
 if __name__ == "__main__":
     app.run(debug=True)
-
