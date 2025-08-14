@@ -54,10 +54,8 @@ time_slots = [
 def index():
     student_ids = list(student_timetables.keys())
     selected_student = request.args.get("student_id", student_ids[0])
-
     timetable_raw = student_timetables.get(selected_student)
     not_found = timetable_raw is None
-
     timetable = list(zip(days, timetable_raw)) if timetable_raw else []
 
     return render_template(
