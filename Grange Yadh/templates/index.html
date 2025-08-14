@@ -30,21 +30,28 @@
         .input-group {
             margin-top: 15px;
         }
+        tfoot td {
+            font-weight: bold;
+            background: #f0f8ff;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <h1>Student Timetable</h1>
 
-    <!-- Student ID Dropdown Form -->
+    <!-- Student ID Input Form -->
     <form method="GET" action="/" class="input-group">
-        <label for="student_id_input">Select Student ID:</label>
-        <select id="student_id_input" name="student_id" required>
-            {% for student_id in student_ids %}
-                <option value="{{ student_id }}" {% if student_id == selected_student %}selected{% endif %}>
-                    {{ student_id }}
-                </option>
-            {% endfor %}
-        </select>
+        <label for="student_id_input">Enter Student ID:</label>
+        <input 
+            type="text" 
+            id="student_id_input" 
+            name="student_id" 
+            value="{{ selected_student }}" 
+            placeholder="Enter student ID here" 
+            required
+            autocomplete="off"
+        />
         <button type="submit">Submit</button>
     </form>
 
@@ -53,30 +60,41 @@
         <div class="not-found">Student ID "{{ selected_student }}" not found.</div>
     {% else %}
         <table>
-            <tr>
-                <th>Day / Time</th>
-                {% for time in time_slots %}
-                    <th>{{ time }}</th>
-                {% endfor %}
-            </tr>
-            {% for day, subjects in timetable %}
+            <thead>
                 <tr>
-                    <td>{{ day }}</td>
-                    {% for subject in subjects %}
-                        <td>{{ subject }}</td>
+                    <th>Day / Time</th>
+                    {% for time in time_slots %}
+                        <th>{{ time }}</th>
                     {% endfor %}
                 </tr>
-            {% endfor %}
+            </thead>
+            <tbody>
+                {% for day, subjects in timetable %}
+                    <tr>
+                        <td>{{ day }}</td>
+                        {% for subject in subjects %}
+                            <td>{{ subject }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="{{ time_slots|length + 1 }}" id="nextClassCountdownCell">
+                        Calculating time to next class...
+                    </td>
+                </tr>
+            </tfoot>
         </table>
     {% endif %}
 
-    <!-- 🔊 Audio alert -->
+    <!-- Audio alert -->
     <audio id="alertSound" preload="auto">
         <source src="https://www.soundjay.com/buttons/sounds/beep-07.mp3" type="audio/mpeg">
     </audio>
 
     <script>
-        // Data from Flask
+        // Pass Python variables to JS via Jinja
         const timetable = {{ timetable | tojson }};
         const timeSlots = {{ time_slots | tojson }};
         const days = {{ days | tojson }};
@@ -91,6 +109,8 @@
             }
 
             scheduleClassReminders();
+            updateNextClassCountdown();
+            setInterval(updateNextClassCountdown, 60 * 1000); // update every minute
         });
 
         function scheduleClassReminders() {
@@ -149,6 +169,48 @@
                     icon: "https://cdn-icons-png.flaticon.com/512/565/565340.png"
                 });
             }
+        }
+
+        function updateNextClassCountdown() {
+            const now = new Date();
+            const currentDayIndex = now.getDay() - 1; // Monday=0
+
+            const countdownCell = document.getElementById("nextClassCountdownCell");
+            if (!countdownCell) return;
+
+            if (currentDayIndex < 0 || currentDayIndex >= 5) {
+                countdownCell.textContent = "No classes today.";
+                return;
+            }
+
+            const todaySchedule = timetable[currentDayIndex];
+
+            let nextClassIndex = -1;
+            let minDiff = Infinity;
+
+            timeSlots.forEach((slotTime, index) => {
+                const [startHour, startMinute] = slotTime.split(" - ")[0].split(":").map(Number);
+                const classTime = new Date();
+                classTime.setHours(startHour, startMinute, 0, 0);
+
+                const diff = classTime - now;
+
+                if (diff > 0 && diff < minDiff) {
+                    minDiff = diff;
+                    nextClassIndex = index;
+                }
+            });
+
+            if (nextClassIndex === -1) {
+                countdownCell.textContent = "No more classes today.";
+                return;
+            }
+
+            const nextClassName = todaySchedule[nextClassIndex];
+            const diffMinutes = Math.floor(minDiff / 60000);
+            const diffSeconds = Math.floor((minDiff % 60000) / 1000);
+
+            countdownCell.textContent = `Next class: "${nextClassName}" starts in ${diffMinutes} min ${diffSeconds} sec.`;
         }
     </script>
 </body>
