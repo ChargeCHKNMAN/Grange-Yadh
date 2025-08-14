@@ -1,215 +1,129 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Student Timetable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4A90E2;
+            padding: 15px;
+            color: white;
             text-align: center;
-            padding: 10px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+        select, input, button {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #357ABD;
         }
         table {
+            width: 100%;
             border-collapse: collapse;
-            margin: 20px auto;
-            width: 95%;
+            margin-top: 15px;
         }
-        th, td {
-            border: 1px solid #333;
-            padding: 8px;
+        table, th, td {
+            border: 1px solid #ddd;
         }
         th {
-            background: #eee;
+            background-color: #4A90E2;
+            color: white;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
         }
         .not-found {
             color: red;
-            margin-top: 15px;
             font-weight: bold;
-        }
-        .input-group {
-            margin-top: 15px;
-        }
-        tfoot td {
-            font-weight: bold;
-            background: #f0f8ff;
             text-align: center;
+        }
+        .reminder-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+        }
+        .reminder-section h3 {
+            margin-top: 0;
         }
     </style>
 </head>
 <body>
-    <h1>Student Timetable</h1>
+    <header>
+        <h1>📅 Student Timetable</h1>
+    </header>
+    <div class="container">
+        <form method="GET" action="/">
+            <label for="student_id"><strong>Select Student ID:</strong></label>
+            <select name="student_id" id="student_id" onchange="this.form.submit()">
+                {% for id in student_ids %}
+                    <option value="{{ id }}" {% if id == selected_student %}selected{% endif %}>{{ id }}</option>
+                {% endfor %}
+            </select>
+        </form>
 
-    <!-- Student ID Input Form -->
-    <form method="GET" action="/" class="input-group">
-        <label for="student_id_input">Enter Student ID:</label>
-        <input 
-            type="text" 
-            id="student_id_input" 
-            name="student_id" 
-            value="{{ selected_student }}" 
-            placeholder="Enter student ID here" 
-            required
-            autocomplete="off"
-        />
-        <button type="submit">Submit</button>
-    </form>
-
-    <!-- Timetable Table -->
-    {% if not_found %}
-        <div class="not-found">Student ID "{{ selected_student }}" not found.</div>
-    {% else %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Day / Time</th>
-                    {% for time in time_slots %}
-                        <th>{{ time }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for day, subjects in timetable %}
+        {% if not_found %}
+            <p class="not-found">No timetable found for this student ID.</p>
+        {% else %}
+            <table>
+                <thead>
                     <tr>
-                        <td>{{ day }}</td>
-                        {% for subject in subjects %}
-                            <td>{{ subject }}</td>
+                        <th>Day</th>
+                        {% for slot in time_slots %}
+                            <th>{{ slot }}</th>
                         {% endfor %}
                     </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="{{ time_slots|length + 1 }}" id="nextClassCountdownCell">
-                        Calculating time to next class...
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-    {% endif %}
+                </thead>
+                <tbody>
+                    {% for day, classes in timetable %}
+                        <tr>
+                            <td><strong>{{ day }}</strong></td>
+                            {% for subject in classes %}
+                                <td>{{ subject }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
 
-    <!-- Audio alert -->
-    <audio id="alertSound" preload="auto">
-        <source src="https://www.soundjay.com/buttons/sounds/beep-07.mp3" type="audio/mpeg">
-    </audio>
-
-    <script>
-        // Pass Python variables to JS via Jinja
-        const timetable = {{ timetable | tojson }};
-        const timeSlots = {{ time_slots | tojson }};
-        const days = {{ days | tojson }};
-
-        document.addEventListener("DOMContentLoaded", () => {
-            if ("Notification" in window && Notification.permission !== "granted") {
-                Notification.requestPermission().then(permission => {
-                    if (permission !== "granted") {
-                        alert("Enable notifications to receive class reminders.");
-                    }
-                });
-            }
-
-            scheduleClassReminders();
-            updateNextClassCountdown();
-            setInterval(updateNextClassCountdown, 60 * 1000); // update every minute
-        });
-
-        function scheduleClassReminders() {
-            const now = new Date();
-            const currentDayIndex = now.getDay() - 1; // Monday = 0
-
-            if (currentDayIndex < 0 || currentDayIndex >= 5) return;
-
-            const todaySchedule = timetable[currentDayIndex];
-
-            timeSlots.forEach((slotTime, index) => {
-                const [startHour, startMinute] = slotTime.split(" - ")[0].split(":").map(Number);
-                const classTime = new Date();
-                classTime.setHours(startHour, startMinute, 0, 0);
-
-                if (classTime < now) return;
-
-                const timeout = classTime - now;
-                // We do not use class name for reminder title as requested, so just say "Class"
-                const subject = "Class";
-
-                setTimeout(() => {
-                    triggerReminder(subject, slotTime);
-                }, timeout);
-            });
-        }
-
-        function triggerReminder(subject, time) {
-            // Visual popup
-            const reminderDiv = document.createElement("div");
-            reminderDiv.textContent = `⏰ Reminder: Your class is starting now (${time})!`;
-            reminderDiv.style.position = "fixed";
-            reminderDiv.style.top = "20px";
-            reminderDiv.style.left = "50%";
-            reminderDiv.style.transform = "translateX(-50%)";
-            reminderDiv.style.background = "#fffa65";
-            reminderDiv.style.padding = "10px 20px";
-            reminderDiv.style.border = "2px solid #333";
-            reminderDiv.style.zIndex = "1000";
-            reminderDiv.style.fontWeight = "bold";
-            document.body.appendChild(reminderDiv);
-
-            setTimeout(() => reminderDiv.remove(), 10000);
-
-            // Audio alert
-            const audio = document.getElementById("alertSound");
-            if (audio) {
-                audio.play().catch(e => {
-                    console.warn("Audio failed to play:", e);
-                });
-            }
-
-            // Browser notification
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("⏰ Class Reminder", {
-                    body: `Your class is starting now (${time})!`,
-                    icon: "https://cdn-icons-png.flaticon.com/512/565/565340.png"
-                });
-            }
-        }
-
-        function updateNextClassCountdown() {
-            const now = new Date();
-            const currentDayIndex = now.getDay() - 1; // Monday=0
-
-            const countdownCell = document.getElementById("nextClassCountdownCell");
-            if (!countdownCell) return;
-
-            if (currentDayIndex < 0 || currentDayIndex >= 5) {
-                countdownCell.textContent = "No classes today.";
-                return;
-            }
-
-            let nextClassTime = null;
-            let minDiff = Infinity;
-
-            timeSlots.forEach((slotTime) => {
-                const [startHour, startMinute] = slotTime.split(" - ")[0].split(":").map(Number);
-                const classTime = new Date();
-                classTime.setHours(startHour, startMinute, 0, 0);
-
-                const diff = classTime - now;
-
-                if (diff > 0 && diff < minDiff) {
-                    minDiff = diff;
-                    nextClassTime = slotTime.split(" - ")[0]; // only start time
-                }
-            });
-
-            if (!nextClassTime) {
-                countdownCell.textContent = "No more classes today.";
-                return;
-            }
-
-            const diffMinutes = Math.floor(minDiff / 60000);
-            const diffSeconds = Math.floor((minDiff % 60000) / 1000);
-
-            countdownCell.textContent = `Next class starts at ${nextClassTime} (in ${diffMinutes} min ${diffSeconds} sec).`;
-        }
-    </script>
+        <div class="reminder-section">
+            <h3>🔔 Set a Class Reminder</h3>
+            <form method="POST" action="/set_reminder">
+                <label for="time_slot">Select Time Slot:</label>
+                <select name="time_slot" id="time_slot" required>
+                    {% for slot in time_slots %}
+                        <option value="{{ slot }}">{{ slot }}</option>
+                    {% endfor %}
+                </select><br>
+                <label for="remind_time">Reminder Time:</label>
+                <input type="time" name="remind_time" id="remind_time" required><br>
+                <button type="submit">Set Reminder</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
