@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Student Timetable with Reminders</title>
+    <title>Student Timetable</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,12 +22,6 @@
         th {
             background: #eee;
         }
-        .reminder {
-            margin-top: 20px;
-        }
-        label, input, button {
-            margin: 5px;
-        }
         .not-found {
             color: red;
             margin-top: 15px;
@@ -42,15 +36,14 @@
     <h1>Student Timetable</h1>
 
     <form method="GET" action="/" class="input-group">
-        <label for="student_id_input">Enter Student ID:</label>
-        <input 
-            type="text" 
-            id="student_id_input" 
-            name="student_id" 
-            value="{{ selected_student }}" 
-            placeholder="Enter student ID here" 
-            required
-        />
+        <label for="student_id_input">Select Student ID:</label>
+        <select id="student_id_input" name="student_id" required>
+            {% for student_id in student_ids %}
+                <option value="{{ student_id }}" {% if student_id == selected_student %}selected{% endif %}>
+                    {{ student_id }}
+                </option>
+            {% endfor %}
+        </select>
         <button type="submit">Submit</button>
     </form>
 
@@ -75,40 +68,75 @@
         </table>
     {% endif %}
 
-    <div class="reminder">
-        <h2>Set a Class Reminder</h2>
-        <label for="reminderTime">Select Time:</label>
-        <input type="time" id="reminderTime" />
-        <button type="button" onclick="setReminder()">Set Reminder</button>
-    </div>
-
+    <!-- JavaScript Section -->
     <script>
-        function setReminder() {
-            const timeInput = document.getElementById("reminderTime").value;
-            if (!timeInput) {
-                alert("Please select a time.");
-                return;
+        const timetable = {{ timetable | tojson }};
+        const timeSlots = {{ time_slots | tojson }};
+        const days = {{ days | tojson }};
+
+        // Ask for notification permission on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission().then(permission => {
+                    if (permission !== "granted") {
+                        alert("Enable notifications to receive class reminders.");
+                    }
+                });
             }
 
-            const [hour, minute] = timeInput.split(":").map(Number);
+            scheduleClassReminders();
+        });
+
+        function scheduleClassReminders() {
             const now = new Date();
-            const reminderTime = new Date();
-            reminderTime.setHours(hour, minute, 0, 0);
+            const currentDayIndex = now.getDay() - 1; // 0 = Monday
 
-            if (reminderTime < now) {
-                reminderTime.setDate(reminderTime.getDate() + 1); // next day
+            if (currentDayIndex < 0 || currentDayIndex >= 5) return;
+
+            const todaySchedule = timetable[currentDayIndex];
+
+            timeSlots.forEach((slotTime, index) => {
+                const [startHour, startMinute] = slotTime.split(" - ")[0].split(":").map(Number);
+                const classTime = new Date();
+                classTime.setHours(startHour, startMinute, 0, 0);
+
+                if (classTime < now) return;
+
+                const timeout = classTime - now;
+                const subject = todaySchedule[index] || "Class";
+
+                setTimeout(() => {
+                    triggerReminder(subject, slotTime);
+                }, timeout);
+            });
+        }
+
+        function triggerReminder(subject, time) {
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 150, 300]);
             }
 
-            const timeout = reminderTime - now;
-            alert(`Reminder set for ${timeInput}`);
+            const reminderDiv = document.createElement("div");
+            reminderDiv.textContent = `⏰ Reminder: "${subject}" is starting now (${time})!`;
+            reminderDiv.style.position = "fixed";
+            reminderDiv.style.top = "20px";
+            reminderDiv.style.left = "50%";
+            reminderDiv.style.transform = "translateX(-50%)";
+            reminderDiv.style.background = "#fffa65";
+            reminderDiv.style.padding = "10px 20px";
+            reminderDiv.style.border = "2px solid #333";
+            reminderDiv.style.zIndex = "1000";
+            reminderDiv.style.fontWeight = "bold";
+            document.body.appendChild(reminderDiv);
 
-            setTimeout(() => {
-                if (navigator.vibrate) {
-                    navigator.vibrate([500, 200, 500]);
-                } else {
-                    alert("Reminder: It's time for your class!");
-                }
-            }, timeout);
+            setTimeout(() => reminderDiv.remove(), 10000);
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("⏰ Class Reminder", {
+                    body: `"${subject}" is starting now (${time})!`,
+                    icon: "https://cdn-icons-png.flaticon.com/512/565/565340.png"
+                });
+            }
         }
     </script>
 </body>
