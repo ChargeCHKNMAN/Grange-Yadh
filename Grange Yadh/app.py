@@ -53,7 +53,7 @@ time_slots = [
 @app.route("/", methods=["GET"])
 def index():
     student_ids = list(student_timetables.keys())
-    selected_student = request.args.get("student_id", student_ids[0])  # default to first student if none selected
+    selected_student = request.args.get("student_id", student_ids[0])
 
     timetable_raw = student_timetables.get(selected_student)
     not_found = timetable_raw is None
