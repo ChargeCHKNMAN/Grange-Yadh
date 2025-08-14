@@ -35,6 +35,7 @@
 <body>
     <h1>Student Timetable</h1>
 
+    <!-- Student ID Dropdown Form -->
     <form method="GET" action="/" class="input-group">
         <label for="student_id_input">Select Student ID:</label>
         <select id="student_id_input" name="student_id" required>
@@ -47,6 +48,7 @@
         <button type="submit">Submit</button>
     </form>
 
+    <!-- Timetable Table -->
     {% if not_found %}
         <div class="not-found">Student ID "{{ selected_student }}" not found.</div>
     {% else %}
@@ -54,27 +56,31 @@
             <tr>
                 <th>Day / Time</th>
                 {% for time in time_slots %}
-                <th>{{ time }}</th>
+                    <th>{{ time }}</th>
                 {% endfor %}
             </tr>
             {% for day, subjects in timetable %}
-            <tr>
-                <td>{{ day }}</td>
-                {% for subject in subjects %}
-                <td>{{ subject }}</td>
-                {% endfor %}
-            </tr>
+                <tr>
+                    <td>{{ day }}</td>
+                    {% for subject in subjects %}
+                        <td>{{ subject }}</td>
+                    {% endfor %}
+                </tr>
             {% endfor %}
         </table>
     {% endif %}
 
-    <!-- JavaScript Section -->
+    <!-- 🔊 Audio alert -->
+    <audio id="alertSound" preload="auto">
+        <source src="https://www.soundjay.com/buttons/sounds/beep-07.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
+        // Data from Flask
         const timetable = {{ timetable | tojson }};
         const timeSlots = {{ time_slots | tojson }};
         const days = {{ days | tojson }};
 
-        // Ask for notification permission on page load
         document.addEventListener("DOMContentLoaded", () => {
             if ("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission().then(permission => {
@@ -89,7 +95,7 @@
 
         function scheduleClassReminders() {
             const now = new Date();
-            const currentDayIndex = now.getDay() - 1; // 0 = Monday
+            const currentDayIndex = now.getDay() - 1; // Monday = 0
 
             if (currentDayIndex < 0 || currentDayIndex >= 5) return;
 
@@ -112,10 +118,7 @@
         }
 
         function triggerReminder(subject, time) {
-            if (navigator.vibrate) {
-                navigator.vibrate([300, 150, 300]);
-            }
-
+            // Visual popup
             const reminderDiv = document.createElement("div");
             reminderDiv.textContent = `⏰ Reminder: "${subject}" is starting now (${time})!`;
             reminderDiv.style.position = "fixed";
@@ -131,6 +134,15 @@
 
             setTimeout(() => reminderDiv.remove(), 10000);
 
+            // Audio alert
+            const audio = document.getElementById("alertSound");
+            if (audio) {
+                audio.play().catch(e => {
+                    console.warn("Audio failed to play:", e);
+                });
+            }
+
+            // Browser notification
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⏰ Class Reminder", {
                     body: `"${subject}" is starting now (${time})!`,
