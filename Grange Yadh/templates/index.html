@@ -129,7 +129,8 @@
                 if (classTime < now) return;
 
                 const timeout = classTime - now;
-                const subject = todaySchedule[index] || "Class";
+                // We do not use class name for reminder title as requested, so just say "Class"
+                const subject = "Class";
 
                 setTimeout(() => {
                     triggerReminder(subject, slotTime);
@@ -140,7 +141,7 @@
         function triggerReminder(subject, time) {
             // Visual popup
             const reminderDiv = document.createElement("div");
-            reminderDiv.textContent = `⏰ Reminder: "${subject}" is starting now (${time})!`;
+            reminderDiv.textContent = `⏰ Reminder: Your class is starting now (${time})!`;
             reminderDiv.style.position = "fixed";
             reminderDiv.style.top = "20px";
             reminderDiv.style.left = "50%";
@@ -165,7 +166,7 @@
             // Browser notification
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⏰ Class Reminder", {
-                    body: `"${subject}" is starting now (${time})!`,
+                    body: `Your class is starting now (${time})!`,
                     icon: "https://cdn-icons-png.flaticon.com/512/565/565340.png"
                 });
             }
@@ -183,12 +184,10 @@
                 return;
             }
 
-            const todaySchedule = timetable[currentDayIndex];
-
-            let nextClassIndex = -1;
+            let nextClassTime = null;
             let minDiff = Infinity;
 
-            timeSlots.forEach((slotTime, index) => {
+            timeSlots.forEach((slotTime) => {
                 const [startHour, startMinute] = slotTime.split(" - ")[0].split(":").map(Number);
                 const classTime = new Date();
                 classTime.setHours(startHour, startMinute, 0, 0);
@@ -197,20 +196,19 @@
 
                 if (diff > 0 && diff < minDiff) {
                     minDiff = diff;
-                    nextClassIndex = index;
+                    nextClassTime = slotTime.split(" - ")[0]; // only start time
                 }
             });
 
-            if (nextClassIndex === -1) {
+            if (!nextClassTime) {
                 countdownCell.textContent = "No more classes today.";
                 return;
             }
 
-            const nextClassName = todaySchedule[nextClassIndex];
             const diffMinutes = Math.floor(minDiff / 60000);
             const diffSeconds = Math.floor((minDiff % 60000) / 1000);
 
-            countdownCell.textContent = `Next class: "${nextClassName}" starts in ${diffMinutes} min ${diffSeconds} sec.`;
+            countdownCell.textContent = `Next class starts at ${nextClassTime} (in ${diffMinutes} min ${diffSeconds} sec).`;
         }
     </script>
 </body>
