@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Student Timetable</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -24,11 +25,13 @@
             border-radius: 10px;
             box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
         }
-        select, input, button {
+        input[type="text"], button {
             padding: 8px;
             margin: 5px 0;
             border-radius: 5px;
             border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
         }
         button {
             background-color: #4A90E2;
@@ -60,14 +63,12 @@
             font-weight: bold;
             text-align: center;
         }
-        .reminder-section {
+        .reminder-info {
             margin-top: 20px;
+            background-color: #e9f5e9;
             padding: 15px;
-            background: #f0f8ff;
-            border-radius: 8px;
-        }
-        .reminder-section h3 {
-            margin-top: 0;
+            border-left: 5px solid #4CAF50;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -75,14 +76,12 @@
     <header>
         <h1>📅 Student Timetable</h1>
     </header>
+
     <div class="container">
-        <form method="GET" action="/">
-            <label for="student_id"><strong>Select Student ID:</strong></label>
-            <select name="student_id" id="student_id" onchange="this.form.submit()">
-                {% for id in student_ids %}
-                    <option value="{{ id }}" {% if id == selected_student %}selected{% endif %}>{{ id }}</option>
-                {% endfor %}
-            </select>
+        <form method="GET" action="{{ url_for('index') }}">
+            <label for="student_id"><strong>Enter Student ID:</strong></label>
+            <input type="text" name="student_id" id="student_id" placeholder="e.g., SAD0006" value="{{ selected_student }}" required>
+            <button type="submit">View Timetable</button>
         </form>
 
         {% if not_found %}
@@ -108,22 +107,19 @@
                     {% endfor %}
                 </tbody>
             </table>
-        {% endif %}
 
-        <div class="reminder-section">
-            <h3>🔔 Set a Class Reminder</h3>
-            <form method="POST" action="/set_reminder">
-                <label for="time_slot">Select Time Slot:</label>
-                <select name="time_slot" id="time_slot" required>
-                    {% for slot in time_slots %}
-                        <option value="{{ slot }}">{{ slot }}</option>
-                    {% endfor %}
-                </select><br>
-                <label for="remind_time">Reminder Time:</label>
-                <input type="time" name="remind_time" id="remind_time" required><br>
-                <button type="submit">Set Reminder</button>
-            </form>
-        </div>
+            {% if next_class %}
+                <div class="reminder-info">
+                    <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
+                    <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
+                    <p><strong>Reminder set for:</strong> {{ next_class.reminder_time }}</p>
+                </div>
+            {% else %}
+                <div class="reminder-info">
+                    <p>No more classes for today. 🎉</p>
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
 </body>
 </html>
