@@ -1,63 +1,46 @@
 from flask import Flask, render_template, request
-import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-student_timetables = {
-    "SAY0023": [
-        ["English (C3)", "English (C3)", "IT (B4)", "IT (B4)", "Business (C9)", "Business (C9)"],
-        ["Business (C9)", "Physics (F4)", "Methods (C10)", "Methods (C10)", "IT (B4)", "English (C3)"],
-        ["General Maths (C9)", "General Maths (C9)", "Physics (F4)", "Physics (F4)", "Methods (C10)", "Methods (C10)"],
-        ["General Maths (C9)", "Methods (C10)", "IT (B4)", "IT (B4)", "English (C3)", "English (C3)"],
-        ["Business (C9)", "Business (C9)", "Physics (F4)", "Physics (F4)", "General Maths (C9)", "General Maths (C9)"]
-    ],
-    "BINH0031": [
-        ["Science (C103)", "Math (C101)", "English (C102)", "Art (C106)", "Music (C109)", "Drama (C110)"],
-        ["Math (C101)", "History (C104)", "PE (C105)", "Drama (C110)", "Geography (C111)", "Music (C109)"],
-        ["English (C102)", "Art (C106)", "Science (C103)", "Math (C101)", "PE (C105)", "Drama (C110)"],
-        ["Math (C101)", "English (C102)", "Science (C103)", "Music (C109)", "History (C104)", "PE (C105)"],
-        ["Drama (C110)", "Math (C101)", "Geography (C111)", "PE (C105)", "Art (C106)", "English (C102)"]
-    ],
-    "ULL0002": [
-        ["Art (C106)", "Math (C101)", "Music (C109)", "Science (C103)", "Drama (C110)", "English (C102)"],
-        ["English (C102)", "PE (C105)", "Math (C101)", "History (C104)", "Art (C106)", "Music (C109)"],
-        ["Science (C103)", "Drama (C110)", "Math (C101)", "Music (C109)", "Geography (C111)", "PE (C105)"],
-        ["Math (C101)", "Science (C103)", "English (C102)", "PE (C105)", "Art (C106)", "Drama (C110)"],
-        ["History (C104)", "Math (C101)", "Science (C103)", "Music (C109)", "Drama (C110)", "English (C102)"]
-    ],
-    "SAD0006": [
-        ["English (C4)", "English (C4)", "IT (B4)", "IT (B4)", "History (C3)", "History (C3)"],
-        ["History (C3)", "Math (C10)", "Psychology (D8)", "Psychology (D8)", "IT (B4)", "English (C4)"],
-        ["Business (C2)", "Business (C2)", "Math (C10)", "Math (C10)", "Psychology (D8)", "Psychology (D8)"],
-        ["Business (C2)", "Psychology (E2)", "IT (B4)", "IT (B4)", "English (C4)", "English (C4)"],
-        ["History (C3)", "History (C3)", "Math (C10)", "Math (C10)", "Business (C2)", "Business (C2)"]
-    ],
-    "JAS0006": [
-        ["Science (C103)", "Music (C109)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
-        ["English (C102)", "Math (C101)", "Science (C103)", "Drama (C110)", "History (C104)", "Art (C106)"],
-        ["Music (C109)", "Art (C106)", "Math (C101)", "PE (C105)", "Science (C103)", "English (C102)"],
-        ["Math (C101)", "Geography (C111)", "Science (C103)", "History (C104)", "Art (C106)", "Drama (C110)"],
-        ["Drama (C110)", "Math (C101)", "Science (C103)", "Music (C109)", "PE (C105)", "English (C102)"]
-    ]
-}
-
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-time_slots = [
-    "9:00 - 9:50",
-    "9:50 - 10:40",
-    "11:00 - 11:50",
-    "11:50 - 12:40",
-    "1:20 - 2:10",
-    "2:10 - 3:00"
-]
+# [ ... student_timetables, days, time_slots ... ]  # Keep this as-is
 
 @app.route("/", methods=["GET"])
 def index():
-    student_ids = list(student_timetables.keys())  # FIXED: Define before using
-    selected_student = request.args.get("student_id", student_ids[0])
+    student_ids = list(student_timetables.keys())
+    selected_student = request.args.get("student_id", "")
     timetable_raw = student_timetables.get(selected_student)
     not_found = timetable_raw is None
     timetable = list(zip(days, timetable_raw)) if timetable_raw else []
+
+    next_class_info = None
+
+    if timetable_raw:
+        now = datetime.now()
+        current_day_index = now.weekday()  # Monday = 0
+
+        if current_day_index < len(days):
+            today_schedule = timetable_raw[current_day_index]
+            current_time = now.time()
+
+            for idx, slot in enumerate(time_slots):
+                start_time_str = slot.split(" - ")[0]
+                start_time = datetime.strptime(start_time_str, "%H:%M").time()
+
+                if current_time < start_time:
+                    subject = today_schedule[idx]
+                    reminder_time = (datetime.combine(now.date(), start_time) - timedelta(minutes=5)).time()
+                    time_until = datetime.combine(now.date(), start_time) - now
+                    mins = int(time_until.total_seconds() // 60)
+                    secs = int(time_until.total_seconds() % 60)
+
+                    next_class_info = {
+                        "subject": subject,
+                        "time_slot": slot,
+                        "reminder_time": reminder_time.strftime("%H:%M"),
+                        "time_until": f"{mins} minutes {secs} seconds"
+                    }
+                    break
 
     return render_template(
         "index.html",
@@ -66,16 +49,9 @@ def index():
         timetable=timetable,
         not_found=not_found,
         days=days,
-        time_slots=time_slots
+        time_slots=time_slots,
+        next_class=next_class_info
     )
-
-@app.route("/set_reminder", methods=["POST"])
-def set_reminder():
-    slot = request.form.get("time_slot")
-    remind_time = request.form.get("remind_time")
-    # Log reminder to console (for now — real push would need phone app support)
-    print(f"Reminder set for slot {slot} at {remind_time}")
-    return f"Reminder set for {slot} at {remind_time}"
 
 if __name__ == "__main__":
     app.run(debug=True)
