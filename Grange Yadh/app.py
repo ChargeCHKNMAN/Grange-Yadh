@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# ✅ Timetable Data
+# --- Timetable Data ---
 student_timetables = {
     "SAY0023": [
         ["English (C3)", "English (C3)", "IT (B4)", "IT (B4)", "Business (C9)", "Business (C9)"],
@@ -12,20 +12,6 @@ student_timetables = {
         ["General Maths (C9)", "Methods (C10)", "IT (B4)", "IT (B4)", "English (C3)", "English (C3)"],
         ["Business (C9)", "Business (C9)", "Physics (F4)", "Physics (F4)", "General Maths (C9)", "General Maths (C9)"]
     ],
-    "BINH0031": [
-        ["Science (C103)", "Math (C101)", "English (C102)", "Art (C106)", "Music (C109)", "Drama (C110)"],
-        ["Math (C101)", "History (C104)", "PE (C105)", "Drama (C110)", "Geography (C111)", "Music (C109)"],
-        ["English (C102)", "Art (C106)", "Science (C103)", "Math (C101)", "PE (C105)", "Drama (C110)"],
-        ["Math (C101)", "English (C102)", "Science (C103)", "Music (C109)", "History (C104)", "PE (C105)"],
-        ["Drama (C110)", "Math (C101)", "Geography (C111)", "PE (C105)", "Art (C106)", "English (C102)"]
-    ],
-    "ULL0002": [
-        ["Art (C106)", "Math (C101)", "Music (C109)", "Science (C103)", "Drama (C110)", "English (C102)"],
-        ["English (C102)", "PE (C105)", "Math (C101)", "History (C104)", "Art (C106)", "Music (C109)"],
-        ["Science (C103)", "Drama (C110)", "Math (C101)", "Music (C109)", "Geography (C111)", "PE (C105)"],
-        ["Math (C101)", "Science (C103)", "English (C102)", "PE (C105)", "Art (C106)", "Drama (C110)"],
-        ["History (C104)", "Math (C101)", "Science (C103)", "Music (C109)", "Drama (C110)", "English (C102)"]
-    ],
     "SAD0006": [
         ["English (C4)", "English (C4)", "IT (B4)", "IT (B4)", "History (C3)", "History (C3)"],
         ["History (C3)", "Math (C10)", "Psychology (D8)", "Psychology (D8)", "IT (B4)", "English (C4)"],
@@ -33,13 +19,7 @@ student_timetables = {
         ["Business (C2)", "Psychology (E2)", "IT (B4)", "IT (B4)", "English (C4)", "English (C4)"],
         ["History (C3)", "History (C3)", "Math (C10)", "Math (C10)", "Business (C2)", "Business (C2)"]
     ],
-    "JAS0006": [
-        ["Science (C103)", "Music (C109)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
-        ["English (C102)", "Math (C101)", "Science (C103)", "Drama (C110)", "History (C104)", "Art (C106)"],
-        ["Music (C109)", "Art (C106)", "Math (C101)", "PE (C105)", "Science (C103)", "English (C102)"],
-        ["Math (C101)", "Geography (C111)", "Science (C103)", "History (C104)", "Art (C106)", "Drama (C110)"],
-        ["Drama (C110)", "Math (C101)", "Science (C103)", "Music (C109)", "PE (C105)", "English (C102)"]
-    ]
+    # Add more students if needed...
 }
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
@@ -56,7 +36,6 @@ time_slots = [
 @app.route("/", methods=["GET"])
 def index():
     student_ids = list(student_timetables.keys())
-
     selected_student = request.args.get("student_id", "")
     timetable_raw = student_timetables.get(selected_student)
     not_found = timetable_raw is None
@@ -73,20 +52,23 @@ def index():
             current_time = now.time()
 
             for idx, slot in enumerate(time_slots):
-                start_time_str = slot.split(" - ")[0]
-                start_time = datetime.strptime(start_time_str, "%H:%M").time()
+                start_str, end_str = slot.split(" - ")
+                start_time = datetime.strptime(start_str, "%H:%M").time()
+                end_time = datetime.strptime(end_str, "%H:%M").time()
 
                 if current_time < start_time:
                     subject = today_schedule[idx]
-                    reminder_time = (datetime.combine(now.date(), start_time) - timedelta(minutes=5)).time()
-                    time_until = datetime.combine(now.date(), start_time) - now
+                    class_start_dt = datetime.combine(now.date(), start_time)
+                    reminder_dt = class_start_dt - timedelta(minutes=5)
+                    time_until = class_start_dt - now
+
                     mins = int(time_until.total_seconds() // 60)
                     secs = int(time_until.total_seconds() % 60)
 
                     next_class_info = {
                         "subject": subject,
                         "time_slot": slot,
-                        "reminder_time": reminder_time.strftime("%H:%M"),
+                        "reminder_time": reminder_dt.strftime("%H:%M"),
                         "time_until": f"{mins} minutes {secs} seconds"
                     }
                     break
@@ -97,7 +79,6 @@ def index():
         selected_student=selected_student,
         timetable=timetable,
         not_found=not_found,
-        days=days,
         time_slots=time_slots,
         next_class=next_class_info
     )
