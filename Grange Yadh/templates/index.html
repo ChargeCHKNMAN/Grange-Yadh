@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Student Timetable</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -30,8 +29,7 @@
             margin: 5px 0;
             border-radius: 5px;
             border: 1px solid #ccc;
-            width: 100%;
-            box-sizing: border-box;
+            font-size: 16px;
         }
         button {
             background-color: #4A90E2;
@@ -63,12 +61,21 @@
             font-weight: bold;
             text-align: center;
         }
-        .reminder-info {
+        .reminder-section {
             margin-top: 20px;
-            background-color: #e9f5e9;
             padding: 15px;
-            border-left: 5px solid #4CAF50;
-            border-radius: 5px;
+            background: #f0f8ff;
+            border-radius: 8px;
+        }
+        .reminder-section h3 {
+            margin-top: 0;
+        }
+        .next-class-info {
+            background: #eaffea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1.1em;
         }
     </style>
 </head>
@@ -76,11 +83,10 @@
     <header>
         <h1>📅 Student Timetable</h1>
     </header>
-
     <div class="container">
-        <form method="GET" action="{{ url_for('index') }}">
-            <label for="student_id"><strong>Enter Student ID:</strong></label>
-            <input type="text" name="student_id" id="student_id" placeholder="e.g., SAD0006" value="{{ selected_student }}" required>
+        <form method="GET" action="/">
+            <label for="student_id"><strong>Enter Student ID:</strong></label><br>
+            <input type="text" id="student_id" name="student_id" placeholder="e.g. SAY0023" value="{{ selected_student }}" required>
             <button type="submit">View Timetable</button>
         </form>
 
@@ -107,18 +113,14 @@
                     {% endfor %}
                 </tbody>
             </table>
+        {% endif %}
 
-            {% if next_class %}
-                <div class="reminder-info">
-                    <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
-                    <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
-                    <p><strong>Reminder set for:</strong> {{ next_class.reminder_time }}</p>
-                </div>
-            {% else %}
-                <div class="reminder-info">
-                    <p>No more classes for today. 🎉</p>
-                </div>
-            {% endif %}
+        {% if next_class %}
+            <div class="next-class-info">
+                <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
+                <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
+                <p><strong>Reminder set for:</strong> {{ next_class.reminder_time }}</p>
+            </div>
         {% endif %}
     </div>
 </body>
