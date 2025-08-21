@@ -1,22 +1,8 @@
 from flask import Flask, render_template, request
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# Time slots defined as datetime.time tuples
-time_slots = [
-    (time(9, 0), time(9, 50)),
-    (time(9, 50), time(10, 40)),
-    (time(11, 0), time(11, 50)),
-    (time(11, 50), time(12, 40)),
-    (time(13, 20), time(14, 10)),
-    (time(14, 10), time(15, 0))
-]
-
-# Weekdays
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-
-# Sample timetable data
 student_timetables = {
     "SAY0023": [
         ["English (C3)", "English (C3)", "IT (B4)", "IT (B4)", "Business (C9)", "Business (C9)"],
@@ -54,38 +40,57 @@ student_timetables = {
         ["Drama (C110)", "Math (C101)", "Science (C103)", "Music (C109)", "PE (C105)", "English (C102)"]
     ]
 }
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
-# Function to find next class
+# Use datetime objects for time slots (start, end)
+time_slots = [
+    (datetime.strptime("09:00", "%H:%M").time(), datetime.strptime("09:50", "%H:%M").time()),
+    (datetime.strptime("09:50", "%H:%M").time(), datetime.strptime("10:40", "%H:%M").time()),
+    (datetime.strptime("11:00", "%H:%M").time(), datetime.strptime("11:50", "%H:%M").time()),
+    (datetime.strptime("11:50", "%H:%M").time(), datetime.strptime("12:40", "%H:%M").time()),
+    (datetime.strptime("13:20", "%H:%M").time(), datetime.strptime("14:10", "%H:%M").time()),
+    (datetime.strptime("14:10", "%H:%M").time(), datetime.strptime("15:00", "%H:%M").time())
+]
+
+def format_time_slot(slot):
+    start_str = slot[0].strftime("%-H:%M") if hasattr(slot[0], 'strftime') else slot[0].strftime("%H:%M")
+    end_str = slot[1].strftime("%-H:%M") if hasattr(slot[1], 'strftime') else slot[1].strftime("%H:%M")
+    return f"{start_str} - {end_str}"
+
 def get_next_class(timetable, time_slots):
     now = datetime.now()
     today_idx = now.weekday()
-
     if today_idx > 4:
+        # Weekend - treat as Monday next week
         days_until_monday = 7 - today_idx
-        now += timedelta(days=days_until_monday)
+        now = now + timedelta(days=days_until_monday)
         today_idx = 0
 
     for day_offset in range(5):
         day_idx = (today_idx + day_offset) % 5
-        class_day = now.date() + timedelta(days=day_offset)
-        classes = timetable[day_idx]
+        classes_today = timetable[day_idx]
 
-        for i, (start_time, end_time) in enumerate(time_slots):
-            class_start = datetime.combine(class_day, start_time)
+        class_date = (now + timedelta(days=day_offset)).date()
+
+        for i, slot in enumerate(time_slots):
+            start_time, end_time = slot
+            class_start = datetime.combine(class_date, start_time)
+            class_end = datetime.combine(class_date, end_time)
 
             if class_start > now:
                 time_until = class_start - now
-                minutes, seconds = divmod(int(time_until.total_seconds()), 60)
-                reminder_time = (class_start - timedelta(minutes=5)).strftime("%H:%M")
-                time_slot_str = f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}"
+                minutes, seconds = divmod(time_until.seconds, 60)
+                reminder_dt = class_start - timedelta(minutes=5)
+                reminder_time = reminder_dt.strftime("%H:%M")
+                slot_str = f"{start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')}"
 
                 return {
-                    "subject": classes[i],
-                    "time_slot": time_slot_str,
+                    "subject": classes_today[i],
+                    "time_slot": slot_str,
                     "time_until": f"{minutes} minutes {seconds} seconds",
-                    "reminder_time": reminder_time
+                    "reminder_time": reminder_time,
+                    "class_start_iso": class_start.isoformat()
                 }
-
     return None
 
 @app.route("/", methods=["GET"])
@@ -96,8 +101,12 @@ def index():
     not_found = timetable_raw is None
     timetable = list(zip(days, timetable_raw)) if timetable_raw else []
 
-    next_class = get_next_class(timetable_raw, time_slots) if timetable_raw else None
-    display_slots = [f"{start.strftime('%H:%M')} - {end.strftime('%H:%M')}" for start, end in time_slots]
+    next_class = None
+    if timetable_raw:
+        next_class = get_next_class(timetable_raw, time_slots)
+
+    # Format timetable for display (convert times to strings)
+    formatted_time_slots = [f"{slot[0].strftime('%H:%M')} - {slot[1].strftime('%H:%M')}" for slot in time_slots]
 
     return render_template(
         "index.html",
@@ -106,7 +115,7 @@ def index():
         timetable=timetable,
         not_found=not_found,
         days=days,
-        time_slots=display_slots,
+        time_slots=formatted_time_slots,
         next_class=next_class
     )
 
