@@ -1,173 +1,208 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8" />
     <title>Student Timetable</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
+        /* --- General styles --- */
         body {
-            font-family: "Segoe UI", sans-serif;
-            background-color: #eef2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
             margin: 0;
             padding: 0;
+            color: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         header {
-            background-color: #2d7dd2;
-            color: white;
+            background-color: #007bff;
+            width: 100%;
             padding: 20px;
             text-align: center;
+            font-weight: 700;
+            font-size: 1.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            user-select: none;
         }
         .container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 15px;
+            max-width: 1000px;
+            margin: 25px 15px 40px;
+            padding: 25px 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            color: #e0e0e0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
-        input[type="text"], button {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            margin: 5px 0;
+        label {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 12px 14px;
+            margin: 10px 0 15px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.1rem;
+            outline: none;
+            transition: 0.3s ease;
+            box-shadow: inset 0 0 8px #007bff;
+            background-color: #ffffff22;
+            color: #f0f0f0;
+        }
+        input[type="text"]:focus {
+            box-shadow: inset 0 0 12px #00c6ff;
+            background-color: #ffffff33;
         }
         button {
-            background-color: #2d7dd2;
-            color: white;
+            background: #00c6ff;
             border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 10px;
             cursor: pointer;
+            font-weight: 700;
+            color: #004d66;
+            transition: background 0.3s ease;
+            user-select: none;
         }
         button:hover {
-            background-color: #1b5fa7;
+            background: #008abf;
+            color: white;
         }
+
+        /* Table styling */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            color: #fff;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            padding: 14px 10px;
+            border: 1px solid #005f9e;
             text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            user-select: none;
         }
         th {
-            background-color: #2d7dd2;
-            color: white;
-        }
-        .next-class-info {
-            background-color: #e6fce6;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 1.1em;
-        }
-        .not-found {
-            color: red;
-            font-weight: bold;
+            background: linear-gradient(90deg, #00c6ff, #007bff);
+            color: #fff;
         }
 
-        /* Reminder popup */
-        #reminder-popup {
+        .not-found {
+            color: #ff6b6b;
+            font-weight: 700;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.15rem;
+            user-select: none;
+        }
+
+        .next-class-info {
+            background: #005f9e88;
+            margin-top: 30px;
+            padding: 18px 25px;
+            border-radius: 15px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            user-select: none;
+        }
+
+        /* Reminder banner */
+        #reminder-banner {
             display: none;
             position: fixed;
             top: 0;
+            left: 0;
             width: 100%;
-            background-color: #ffd700;
-            color: black;
+            background-color: #ffca28;
+            color: #333;
+            font-weight: 700;
+            padding: 15px 0;
             text-align: center;
-            padding: 15px;
-            font-weight: bold;
-            z-index: 1000;
+            z-index: 10000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+        #reminder-banner button {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #333;
+            margin-left: 20px;
+            vertical-align: middle;
+            user-select: none;
         }
 
-        /* Mobile tweaks */
-        @media (max-width: 600px) {
-            table, thead, tbody, th, td, tr {
-                display: block;
+        /* Responsive */
+        @media (max-width: 768px) {
+            input[type="text"] {
+                width: 100%;
             }
-            th {
-                position: absolute;
-                left: -9999px;
+            button {
+                width: 100%;
+                margin-top: 10px;
             }
-            td {
-                position: relative;
-                padding-left: 50%;
-                text-align: left;
+            table, th, td {
+                font-size: 0.85rem;
             }
-            td:before {
-                content: attr(data-label);
-                position: absolute;
-                left: 10px;
-                font-weight: bold;
+            .container {
+                padding: 20px 15px;
             }
         }
     </style>
 </head>
 <body>
+    <header>📅 Student Timetable</header>
+    <div class="container">
+        <form method="GET" action="/">
+            <label for="student_id">Enter Student ID:</label><br/>
+            <input
+              type="text"
+              id="student_id"
+              name="student_id"
+              placeholder="e.g. SAY0023"
+              value="{{ selected_student }}"
+              required
+            />
+            <button type="submit">View Timetable</button>
+        </form>
 
-<header>
-    <h1>📚 Student Timetable</h1>
-</header>
-
-<div id="reminder-popup">⏰ Reminder: Your next class is starting soon!</div>
-
-<div class="container">
-    <form method="GET" action="/">
-        <label for="student_id"><strong>Enter Student ID:</strong></label><br>
-        <input type="text" id="student_id" name="student_id" placeholder="e.g. SAY0023" value="{{ selected_student }}" required>
-        <button type="submit">View Timetable</button>
-    </form>
-
-    {% if not_found %}
-        <p class="not-found">No timetable found for this student ID.</p>
-    {% else %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Day</th>
-                    {% for slot in time_slots %}
-                        <th>{{ slot }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for day, classes in timetable %}
+        {% if not_found %}
+            <p class="not-found">No timetable found for this student ID.</p>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        {% for slot in time_slots %}
+                            <th>{{ slot }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day, classes in timetable %}
                     <tr>
                         <td><strong>{{ day }}</strong></td>
                         {% for subject in classes %}
-                            <td>{{ subject }}</td>
+                        <td>{{ subject }}</td>
                         {% endfor %}
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
 
-    {% if next_class %}
-        <div class="next-class-info">
-            <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
-            <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
-            <p><strong>Reminder will pop up at:</strong> {{ next_class.reminder_time }}</p>
-        </div>
-    {% endif %}
-</div>
-
-<script>
-    const reminderTime = "{{ next_class.reminder_time if next_class else '' }}";
-
-    function checkReminder() {
-        const now = new Date();
-        const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-
-        if (currentTime === reminderTime) {
-            document.getElementById('reminder-popup').style.display = 'block';
-        } else {
-            document.getElementById('reminder-popup').style.display = 'none';
-        }
-    }
-
-    setInterval(checkReminder, 1000); // check every second
-</script>
-
-</body>
-</html>
+        {% if next_class %}
+            <div class="next-class-info" id="next-class-info">
+                <p><
