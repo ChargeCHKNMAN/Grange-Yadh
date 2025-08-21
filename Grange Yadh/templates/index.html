@@ -114,5 +114,25 @@
             </div>
         {% endif %}
     </div>
+
+    {% if next_class %}
+    <script>
+        const now = new Date();
+        const [reminderHour, reminderMinute] = "{{ next_class.reminder_time }}".split(":").map(Number);
+
+        let reminderTime = new Date();
+        reminderTime.setHours(reminderHour, reminderMinute, 0, 0);
+
+        if (reminderTime < now) {
+            reminderTime.setDate(reminderTime.getDate() + 1);
+        }
+
+        const timeUntilReminder = reminderTime.getTime() - now.getTime();
+
+        setTimeout(() => {
+            alert("⏰ Reminder: Your next class ({{ next_class.subject }}) starts in 5 minutes at {{ next_class.time_slot }}.");
+        }, timeUntilReminder);
+    </script>
+    {% endif %}
 </body>
 </html>
