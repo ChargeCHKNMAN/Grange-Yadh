@@ -107,7 +107,7 @@
         {% endif %}
 
         {% if next_class %}
-            <div class="next-class-info">
+            <div class="next-class-info" id="next-class-info">
                 <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
                 <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
                 <p><strong>Reminder set for:</strong> {{ next_class.reminder_time }}</p>
@@ -117,21 +117,30 @@
 
     {% if next_class %}
     <script>
-        const now = new Date();
-        const [reminderHour, reminderMinute] = "{{ next_class.reminder_time }}".split(":").map(Number);
+        // Reminder popup 5 minutes before class start
+        const classStartStr = "{{ next_class.start_datetime }}"; // "YYYY-MM-DD HH:mm:ss"
+        const subject = "{{ next_class.subject }}";
+        const timeSlot = "{{ next_class.time_slot }}";
 
-        let reminderTime = new Date();
-        reminderTime.setHours(reminderHour, reminderMinute, 0, 0);
-
-        if (reminderTime < now) {
-            reminderTime.setDate(reminderTime.getDate() + 1);
+        function showReminder() {
+            alert(`Reminder: Your next class "${subject}" starts at ${timeSlot}!`);
         }
 
-        const timeUntilReminder = reminderTime.getTime() - now.getTime();
+        function checkReminder() {
+            const now = new Date();
+            const [year, month, day, hour, minute, second] = classStartStr.match(/\d+/g).map(Number);
+            const classStart = new Date(year, month - 1, day, hour, minute, second);
+            const reminderTime = new Date(classStart.getTime() - 5 * 60000); // 5 minutes before class start
 
-        setTimeout(() => {
-            alert("⏰ Reminder: Your next class ({{ next_class.subject }}) starts in 5 minutes at {{ next_class.time_slot }}.");
-        }, timeUntilReminder);
+            if (now >= reminderTime && now < classStart) {
+                showReminder();
+                clearInterval(reminderInterval);
+            }
+        }
+
+        // Check every 30 seconds
+        const reminderInterval = setInterval(checkReminder, 30000);
+        checkReminder();
     </script>
     {% endif %}
 </body>
