@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7fa;
+            font-family: "Segoe UI", sans-serif;
+            background-color: #eef2f5;
             margin: 0;
             padding: 0;
         }
         header {
-            background-color: #4A90E2;
-            padding: 15px;
+            background-color: #2d7dd2;
             color: white;
+            padding: 20px;
             text-align: center;
         }
         .container {
@@ -21,127 +21,153 @@
             margin: 20px auto;
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         input[type="text"], button {
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            padding: 10px;
             font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin: 5px 0;
         }
         button {
-            background-color: #4A90E2;
+            background-color: #2d7dd2;
             color: white;
             border: none;
             cursor: pointer;
         }
         button:hover {
-            background-color: #357ABD;
+            background-color: #1b5fa7;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th {
-            background-color: #4A90E2;
-            color: white;
+            margin-top: 20px;
         }
         th, td {
+            border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
         }
-        .not-found {
-            color: red;
-            font-weight: bold;
-            text-align: center;
+        th {
+            background-color: #2d7dd2;
+            color: white;
         }
         .next-class-info {
-            background: #eaffea;
+            background-color: #e6fce6;
             padding: 15px;
             border-radius: 8px;
             margin-top: 20px;
             font-size: 1.1em;
         }
+        .not-found {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Reminder popup */
+        #reminder-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: #ffd700;
+            color: black;
+            text-align: center;
+            padding: 15px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 600px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            th {
+                position: absolute;
+                left: -9999px;
+            }
+            td {
+                position: relative;
+                padding-left: 50%;
+                text-align: left;
+            }
+            td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>📅 Student Timetable</h1>
-    </header>
-    <div class="container">
-        <form method="GET" action="/">
-            <label for="student_id"><strong>Enter Student ID:</strong></label><br>
-            <input type="text" id="student_id" name="student_id" placeholder="e.g. SAY0023" value="{{ selected_student }}" required>
-            <button type="submit">View Timetable</button>
-        </form>
 
-        {% if not_found %}
-            <p class="not-found">No timetable found for this student ID.</p>
-        {% else %}
-            <table>
-                <thead>
+<header>
+    <h1>📚 Student Timetable</h1>
+</header>
+
+<div id="reminder-popup">⏰ Reminder: Your next class is starting soon!</div>
+
+<div class="container">
+    <form method="GET" action="/">
+        <label for="student_id"><strong>Enter Student ID:</strong></label><br>
+        <input type="text" id="student_id" name="student_id" placeholder="e.g. SAY0023" value="{{ selected_student }}" required>
+        <button type="submit">View Timetable</button>
+    </form>
+
+    {% if not_found %}
+        <p class="not-found">No timetable found for this student ID.</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    {% for slot in time_slots %}
+                        <th>{{ slot }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for day, classes in timetable %}
                     <tr>
-                        <th>Day</th>
-                        {% for slot in time_slots %}
-                            <th>{{ slot }}</th>
+                        <td><strong>{{ day }}</strong></td>
+                        {% for subject in classes %}
+                            <td>{{ subject }}</td>
                         {% endfor %}
                     </tr>
-                </thead>
-                <tbody>
-                    {% for day, classes in timetable %}
-                        <tr>
-                            <td><strong>{{ day }}</strong></td>
-                            {% for subject in classes %}
-                                <td>{{ subject }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-
-        {% if next_class %}
-            <div class="next-class-info" id="next-class-info">
-                <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
-                <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
-                <p><strong>Reminder set for:</strong> {{ next_class.reminder_time }}</p>
-            </div>
-        {% endif %}
-    </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 
     {% if next_class %}
-    <script>
-        // Reminder popup 5 minutes before class start
-        const classStartStr = "{{ next_class.start_datetime }}"; // "YYYY-MM-DD HH:mm:ss"
-        const subject = "{{ next_class.subject }}";
-        const timeSlot = "{{ next_class.time_slot }}";
-
-        function showReminder() {
-            alert(`Reminder: Your next class "${subject}" starts at ${timeSlot}!`);
-        }
-
-        function checkReminder() {
-            const now = new Date();
-            const [year, month, day, hour, minute, second] = classStartStr.match(/\d+/g).map(Number);
-            const classStart = new Date(year, month - 1, day, hour, minute, second);
-            const reminderTime = new Date(classStart.getTime() - 5 * 60000); // 5 minutes before class start
-
-            if (now >= reminderTime && now < classStart) {
-                showReminder();
-                clearInterval(reminderInterval);
-            }
-        }
-
-        // Check every 30 seconds
-        const reminderInterval = setInterval(checkReminder, 30000);
-        checkReminder();
-    </script>
+        <div class="next-class-info">
+            <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
+            <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
+            <p><strong>Reminder will pop up at:</strong> {{ next_class.reminder_time }}</p>
+        </div>
     {% endif %}
+</div>
+
+<script>
+    const reminderTime = "{{ next_class.reminder_time if next_class else '' }}";
+
+    function checkReminder() {
+        const now = new Date();
+        const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+
+        if (currentTime === reminderTime) {
+            document.getElementById('reminder-popup').style.display = 'block';
+        } else {
+            document.getElementById('reminder-popup').style.display = 'none';
+        }
+    }
+
+    setInterval(checkReminder, 1000); // check every second
+</script>
+
 </body>
 </html>
