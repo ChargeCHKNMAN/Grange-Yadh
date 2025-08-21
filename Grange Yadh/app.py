@@ -1,111 +1,116 @@
 from flask import Flask, render_template, request
 from datetime import datetime, timedelta
+import os
 
 app = Flask(__name__)
 
-# Sample timetable data for demonstration
-# Format: { student_id: { day: [subject per slot] } }
-TIMETABLES = {
-    "SAY0023": {
-        "Monday":    ["Math", "Physics", "Chemistry", "English", "PE"],
-        "Tuesday":   ["Biology", "Math", "History", "Geography", "Art"],
-        "Wednesday": ["Physics", "Chemistry", "Math", "English", "Music"],
-        "Thursday":  ["Math", "Biology", "PE", "History", "Physics"],
-        "Friday":    ["English", "Math", "Chemistry", "Geography", "Computer Science"],
-    },
-    "SAY0101": {
-        "Monday":    ["English", "Math", "Physics", "History", "PE"],
-        "Tuesday":   ["Math", "Chemistry", "Biology", "Art", "Music"],
-        "Wednesday": ["Geography", "English", "Math", "Physics", "Computer Science"],
-        "Thursday":  ["History", "Math", "Chemistry", "PE", "Biology"],
-        "Friday":    ["Physics", "English", "Math", "Art", "Music"],
-    }
+student_timetables = {
+    "SAY0023": [
+        ["English (C3)", "English (C3)", "IT (B4)", "IT (B4)", "Business (C9)", "Business (C9)"],
+        ["Business (C9)", "Physics (F4)", "Methods (C10)", "Methods (C10)", "IT (B4)", "English (C3)"],
+        ["General Maths (C9)", "General Maths (C9)", "Physics (F4)", "Physics (F4)", "Methods (C10)", "Methods (C10)"],
+        ["General Maths (C9)", "Methods (C10)", "IT (B4)", "IT (B4)", "English (C3)", "English (C3)"],
+        ["Business (C9)", "Business (C9)", "Physics (F4)", "Physics (F4)", "General Maths (C9)", "General Maths (C9)"]
+    ],
+    "BINH0031": [
+        ["Science (C103)", "Math (C101)", "English (C102)", "Art (C106)", "Music (C109)", "Drama (C110)"],
+        ["Math (C101)", "History (C104)", "PE (C105)", "Drama (C110)", "Geography (C111)", "Music (C109)"],
+        ["English (C102)", "Art (C106)", "Science (C103)", "Math (C101)", "PE (C105)", "Drama (C110)"],
+        ["Math (C101)", "English (C102)", "Science (C103)", "Music (C109)", "History (C104)", "PE (C105)"],
+        ["Drama (C110)", "Math (C101)", "Geography (C111)", "PE (C105)", "Art (C106)", "English (C102)"]
+    ],
+    "ULL0002": [
+        ["Art (C106)", "Math (C101)", "Music (C109)", "Science (C103)", "Drama (C110)", "English (C102)"],
+        ["English (C102)", "PE (C105)", "Math (C101)", "History (C104)", "Art (C106)", "Music (C109)"],
+        ["Science (C103)", "Drama (C110)", "Math (C101)", "Music (C109)", "Geography (C111)", "PE (C105)"],
+        ["Math (C101)", "Science (C103)", "English (C102)", "PE (C105)", "Art (C106)", "Drama (C110)"],
+        ["History (C104)", "Math (C101)", "Science (C103)", "Music (C109)", "Drama (C110)", "English (C102)"]
+    ],
+    "SAD0006": [
+        ["English (C4)", "English (C4)", "IT (B4)", "IT (B4)", "History (C3)", "History (C3)"],
+        ["History (C3)", "Math (C10)", "Psychology (D8)", "Psychology (D8)", "IT (B4)", "English (C4)"],
+        ["Business (C2)", "Business (C2)", "Math (C10)", "Math (C10)", "Psychology (D8)", "Psychology (D8)"],
+        ["Business (C2)", "Psychology (E2)", "IT (B4)", "IT (B4)", "English (C4)", "English (C4)"],
+        ["History (C3)", "History (C3)", "Math (C10)", "Math (C10)", "Business (C2)", "Business (C2)"]
+    ],
+    "JAS0006": [
+        ["Science (C103)", "Music (C109)", "Math (C101)", "Art (C106)", "PE (C105)", "Drama (C110)"],
+        ["English (C102)", "Math (C101)", "Science (C103)", "Drama (C110)", "History (C104)", "Art (C106)"],
+        ["Music (C109)", "Art (C106)", "Math (C101)", "PE (C105)", "Science (C103)", "English (C102)"],
+        ["Math (C101)", "Geography (C111)", "Science (C103)", "History (C104)", "Art (C106)", "Drama (C110)"],
+        ["Drama (C110)", "Math (C101)", "Science (C103)", "Music (C109)", "PE (C105)", "English (C102)"]
+    ]
 }
 
-# Time slots for classes (5 slots, example)
-TIME_SLOTS = [
-    "08:30 - 09:20",
-    "09:25 - 10:15",
-    "10:20 - 11:10",
-    "11:15 - 12:05",
-    "12:10 - 13:00"
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+time_slots = [
+    "9:00 - 9:50",
+    "9:50 - 10:40",
+    "11:00 - 11:50",
+    "11:50 - 12:40",
+    "1:20 - 2:10",
+    "2:10 - 3:00"
 ]
 
-# Convert time slot string to datetime.time for comparison
-def parse_slot_start_time(slot_str):
-    # e.g. "08:30 - 09:20" -> datetime.time(8,30)
-    start_str = slot_str.split('-')[0].strip()
-    return datetime.strptime(start_str, "%H:%M").time()
+def get_next_class(timetable, time_slots):
+    now = datetime.now()
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+
+    today_idx = now.weekday()
+    if today_idx > 4:
+        days_until_monday = 7 - today_idx
+        now = now + timedelta(days=days_until_monday)
+        today_idx = 0
+
+    for day_offset in range(5):
+        day_idx = (today_idx + day_offset) % 5
+        classes_today = timetable[day_idx]
+        day_name = days_of_week[day_idx]
+
+        for i, slot in enumerate(time_slots):
+            start_str, end_str = slot.split(" - ")
+            class_date = now.date() + timedelta(days=day_offset)
+            class_start = datetime.strptime(f"{class_date} {start_str}", "%Y-%m-%d %H:%M")
+
+            if class_start > now:
+                time_until = class_start - now
+                minutes, seconds = divmod(time_until.seconds, 60)
+
+                reminder_dt = class_start - timedelta(minutes=5)
+                reminder_time = reminder_dt.strftime("%H:%M")
+
+                return {
+                    "subject": classes_today[i],
+                    "time_slot": slot,
+                    "time_until": f"{minutes} minutes {seconds} seconds",
+                    "reminder_time": reminder_time,
+                    "start_datetime": class_start.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+    return None
 
 @app.route("/", methods=["GET"])
 def index():
-    student_id = request.args.get("student_id", "").strip().upper()
-    not_found = False
-    timetable_data = []
-    next_class_info = None
+    student_ids = list(student_timetables.keys())
+    selected_student = request.args.get("student_id", student_ids[0])
+    timetable_raw = student_timetables.get(selected_student)
+    not_found = timetable_raw is None
+    timetable = list(zip(days, timetable_raw)) if timetable_raw else []
 
-    if student_id:
-        if student_id not in TIMETABLES:
-            not_found = True
-        else:
-            student_timetable = TIMETABLES[student_id]
-            # Prepare timetable as list of (day, [subjects]) for template
-            timetable_data = [(day, student_timetable.get(day, [""]*len(TIME_SLOTS))) for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]]
-
-            # Find next class based on current datetime
-            now = datetime.now()
-
-            # We assume classes happen Mon-Fri only
-            # Find today or next day with a class coming
-            days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-            today_weekday = now.weekday()  # Monday=0 ... Friday=4
-            found_next = False
-
-            for day_offset in range(5):
-                check_day_index = (today_weekday + day_offset) % 5
-                day_name = days_of_week[check_day_index]
-
-                classes = student_timetable.get(day_name, [])
-                if not classes:
-                    continue
-
-                # Calculate date for that day
-                day_date = now.date() + timedelta(days=day_offset)
-
-                for idx, subject in enumerate(classes):
-                    if subject.strip() == "":
-                        continue
-                    slot_start_time = parse_slot_start_time(TIME_SLOTS[idx])
-                    slot_start_dt = datetime.combine(day_date, slot_start_time)
-
-                    if slot_start_dt > now:
-                        # Next class found
-                        time_until = slot_start_dt - now
-                        minutes, seconds = divmod(time_until.seconds, 60)
-                        time_until_str = f"{minutes}m {seconds}s" if minutes > 0 else f"{seconds}s"
-                        reminder_dt = slot_start_dt - timedelta(minutes=5)
-                        reminder_time_str = reminder_dt.strftime("%Y-%m-%d %H:%M:%S")
-                        next_class_info = {
-                            "subject": subject,
-                            "time_slot": TIME_SLOTS[idx],
-                            "start_datetime": slot_start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                            "time_until": time_until_str,
-                            "reminder_time": reminder_time_str
-                        }
-                        found_next = True
-                        break
-                if found_next:
-                    break
+    next_class = None
+    if timetable_raw:
+        next_class = get_next_class(timetable_raw, time_slots)
 
     return render_template(
         "index.html",
-        selected_student=student_id,
-        timetable=timetable_data,
-        time_slots=TIME_SLOTS,
+        student_ids=student_ids,
+        selected_student=selected_student,
+        timetable=timetable,
         not_found=not_found,
-        next_class=next_class_info,
+        days=days,
+        time_slots=time_slots,
+        next_class=next_class
     )
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
