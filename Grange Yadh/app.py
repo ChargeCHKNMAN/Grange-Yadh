@@ -53,29 +53,27 @@ time_slots = [
 
 def get_next_class(timetable, time_slots):
     now = datetime.now()
-    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-
-    # Monday=0 ... Friday=4, weekends treated as Monday next week
     today_idx = now.weekday()
+
+    # If weekend, shift to next Monday
     if today_idx > 4:
-        # Weekend: shift to Monday
         days_until_monday = 7 - today_idx
-        now = now + timedelta(days=days_until_monday)
+        now += timedelta(days=days_until_monday)
         today_idx = 0
 
     for day_offset in range(5):
         day_idx = (today_idx + day_offset) % 5
+        class_date = now.date() + timedelta(days=day_offset)
         classes_today = timetable[day_idx]
-        day_name = days_of_week[day_idx]
 
         for i, slot in enumerate(time_slots):
-            start_str, end_str = slot.split(" - ")
-            class_date = now.date() + timedelta(days=day_offset)
+            start_str, _ = slot.split(" - ")
             class_start = datetime.strptime(f"{class_date} {start_str}", "%Y-%m-%d %H:%M")
 
             if class_start > now:
                 time_until = class_start - now
-                minutes, seconds = divmod(time_until.seconds, 60)
+                total_seconds = int(time_until.total_seconds())
+                minutes, seconds = divmod(total_seconds, 60)
 
                 reminder_dt = class_start - timedelta(minutes=5)
                 reminder_time = reminder_dt.strftime("%H:%M")
@@ -84,7 +82,7 @@ def get_next_class(timetable, time_slots):
                     "subject": classes_today[i],
                     "time_slot": slot,
                     "time_until": f"{minutes} minutes {seconds} seconds",
-                    "reminder_time": reminder_time,
+                    "reminder_time": reminder_time
                 }
     return None
 
@@ -96,9 +94,7 @@ def index():
     not_found = timetable_raw is None
     timetable = list(zip(days, timetable_raw)) if timetable_raw else []
 
-    next_class = None
-    if timetable_raw:
-        next_class = get_next_class(timetable_raw, time_slots)
+    next_class = get_next_class(timetable_raw, time_slots) if timetable_raw else None
 
     return render_template(
         "index.html",
