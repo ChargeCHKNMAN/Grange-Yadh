@@ -1,147 +1,242 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student Timetable</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7fa;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #4A90E2;
-            padding: 15px;
-            color: white;
-            text-align: center;
-        }
-        .container {
-            max-width: 900px;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-        }
-        input[type="text"], button {
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-        button {
-            background-color: #4A90E2;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #357ABD;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th {
-            background-color: #4A90E2;
-            color: white;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-        .not-found {
-            color: red;
-            font-weight: bold;
-            text-align: center;
-        }
-        .next-class-info {
-            background: #eaffea;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 1.1em;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>📅 Student Timetable</h1>
-    </header>
-    <div class="container">
-        <form method="GET" action="/">
-            <label for="student_id"><strong>Enter Student ID:</strong></label><br>
-            <input type="text" id="student_id" name="student_id" placeholder="e.g. SAY0023" value="{{ selected_student }}" required>
-            <button type="submit">View Timetable</button>
-        </form>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Student Timetable</title>
 
-        {% if not_found %}
-            <p class="not-found">No timetable found for this student ID.</p>
-        {% else %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Day</th>
-                        {% for slot in time_slots %}
-                            <th>{{ slot }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for day, classes in timetable %}
-                        <tr>
-                            <td><strong>{{ day }}</strong></td>
-                            {% for subject in classes %}
-                                <td>{{ subject }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-        {% if next_class %}
-            <div class="next-class-info" id="next-class-info">
-                <p><strong>Next Class:</strong> {{ next_class.subject }} at {{ next_class.time_slot }}</p>
-                <p><strong>Time until class:</strong> {{ next_class.time_until }}</p>
-                <p><strong>Reminder set for:</strong> {{ next_class.reminder_time }}</p>
-            </div>
-        {% endif %}
-    </div>
+<style>
+    /* Reset & basics */
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #121212, #1d1d1d);
+        color: #eee;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    header {
+        position: fixed;
+        width: 100%;
+        top: 0;
+        background: #0f0f0f;
+        box-shadow: 0 0 20px #0ef;
+        padding: 18px 0;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.8rem;
+        letter-spacing: 1.2px;
+        color: #0ef;
+        z-index: 10000;
+        user-select: none;
+        transition: padding 0.3s ease;
+    }
 
-    {% if next_class %}
-    <script>
-        // Reminder popup 5 minutes before class start
-        const classStartStr = "{{ next_class.start_datetime }}"; // "YYYY-MM-DD HH:mm:ss"
-        const subject = "{{ next_class.subject }}";
-        const timeSlot = "{{ next_class.time_slot }}";
+    main.container {
+        margin: 100px auto 40px;
+        max-width: 950px;
+        background: #222;
+        border-radius: 16px;
+        padding: 30px 40px;
+        box-shadow: 0 0 30px #0ef5;
+        transition: background 0.3s ease;
+    }
 
-        function showReminder() {
-            alert(`Reminder: Your next class "${subject}" starts at ${timeSlot}!`);
-        }
+    /* Form */
+    form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    label {
+        flex: 1 0 140px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #0ef;
+        user-select: none;
+    }
+    input[type="text"] {
+        flex: 2 1 250px;
+        padding: 12px 15px;
+        border-radius: 12px;
+        border: 2px solid #0ef;
+        background: #111;
+        color: #eee;
+        font-size: 1.1rem;
+        outline-offset: 2px;
+        transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+        border-color: #7ff;
+        box-shadow: 0 0 10px #7ff;
+        background: #1a1a1a;
+    }
+    button {
+        flex: 0 0 140px;
+        padding: 12px 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #111;
+        background: #0ef;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        box-shadow: 0 0 15px #0ef;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+    }
+    button:hover, button:focus {
+        background: #07c;
+        box-shadow: 0 0 20px #07c, 0 0 40px #0ef;
+    }
 
-        function checkReminder() {
-            const now = new Date();
-            const [year, month, day, hour, minute, second] = classStartStr.match(/\d+/g).map(Number);
-            const classStart = new Date(year, month - 1, day, hour, minute, second);
-            const reminderTime = new Date(classStart.getTime() - 5 * 60000); // 5 minutes before class start
+    /* Table styling */
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        font-size: 1rem;
+        overflow-x: auto;
+        border-radius: 16px;
+        display: block;
+    }
+    thead th {
+        background: #0ef;
+        color: #111;
+        padding: 15px 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 0 15px #0ef;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        user-select: none;
+    }
+    tbody tr {
+        background: #111;
+        border-radius: 12px;
+        transition: background 0.25s ease;
+        cursor: default;
+        display: table-row;
+    }
+    tbody tr:hover {
+        background: #07345c;
+        box-shadow: 0 0 15px #0af;
+    }
+    tbody td {
+        padding: 12px 8px;
+        color: #ccc;
+        text-align: center;
+        border-right: 1px solid #0ef2;
+        transition: color 0.3s ease;
+        font-weight: 500;
+        user-select: none;
+        white-space: nowrap;
+    }
+    tbody td:last-child {
+        border-right: none;
+    }
+    tbody td:hover {
+        color: #0ef;
+        font-weight: 700;
+    }
+    tbody td strong {
+        color: #0ff;
+    }
 
-            if (now >= reminderTime && now < classStart) {
-                showReminder();
-                clearInterval(reminderInterval);
-            }
-        }
+    /* Not found message */
+    .not-found {
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.3rem;
+        color: #f33;
+        margin: 30px 0;
+        text-shadow: 0 0 10px #f44;
+        user-select: none;
+    }
 
-        // Check every 30 seconds
-        const reminderInterval = setInterval(checkReminder, 30000);
-        checkReminder();
-    </script>
-    {% endif %}
-</body>
-</html>
+    /* Next class info */
+    .next-class-info {
+        margin-top: 25px;
+        background: #003300;
+        border: 2px solid #0ef;
+        border-radius: 14px;
+        padding: 20px;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #0ef;
+        box-shadow: 0 0 25px #0ef;
+        user-select: none;
+    }
+
+    /* Reminder banner */
+    #reminder-banner {
+        display: none;
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #00ff99dd;
+        color: #003300;
+        font-weight: 700;
+        padding: 18px 30px;
+        border-radius: 30px;
+        box-shadow: 0 0 15px #00ff99cc;
+        z-index: 11000;
+        font-size: 1.25rem;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.5s ease, opacity 0.5s ease;
+        max-width: 90vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    #reminder-banner.show {
+        display: flex;
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    #reminder-banner.hide {
+        transform: translateX(-50%) translateY(-150%);
+        opacity: 0;
+        transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+    #reminder-banner button {
+        background: transparent;
+        border: none;
+        font-weight: 900;
+        font-size: 1.8rem;
+        line-height: 1;
+        color: #003300;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 12px;
+        user-select: none;
+    }
+    #reminder-banner button:focus {
+        outline: 2px solid #003300;
+        outline-offset: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 650px) {
+        main.container {
+            margin: 90px 12px 30px;
+            padding: 20
