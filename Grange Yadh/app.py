@@ -55,7 +55,7 @@ def get_next_class(timetable, time_slots):
     now = datetime.now()
     today_idx = now.weekday()
 
-    # If weekend, shift to next Monday
+    # Weekend shift to Monday
     if today_idx > 4:
         days_until_monday = 7 - today_idx
         now += timedelta(days=days_until_monday)
@@ -82,7 +82,8 @@ def get_next_class(timetable, time_slots):
                     "subject": classes_today[i],
                     "time_slot": slot,
                     "time_until": f"{minutes} minutes {seconds} seconds",
-                    "reminder_time": reminder_time
+                    "reminder_time": reminder_time,
+                    "start_datetime": class_start.strftime("%Y-%m-%d %H:%M:%S")
                 }
     return None
 
