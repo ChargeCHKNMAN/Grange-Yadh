@@ -184,59 +184,87 @@
         user-select: none;
     }
 
-    /* Reminder banner */
-    #reminder-banner {
-        display: none;
-        position: fixed;
-        top: 60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #00ff99dd;
-        color: #003300;
-        font-weight: 700;
-        padding: 18px 30px;
-        border-radius: 30px;
-        box-shadow: 0 0 15px #00ff99cc;
-        z-index: 11000;
-        font-size: 1.25rem;
-        cursor: pointer;
-        user-select: none;
-        transition: transform 0.5s ease, opacity 0.5s ease;
-        max-width: 90vw;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-    }
-    #reminder-banner.show {
-        display: flex;
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-    }
-    #reminder-banner.hide {
-        transform: translateX(-50%) translateY(-150%);
-        opacity: 0;
-        transition: transform 0.5s ease, opacity 0.5s ease;
-    }
-    #reminder-banner button {
-        background: transparent;
-        border: none;
-        font-weight: 900;
-        font-size: 1.8rem;
-        line-height: 1;
-        color: #003300;
-        cursor: pointer;
-        padding: 0;
-        margin-left: 12px;
-        user-select: none;
-    }
-    #reminder-banner button:focus {
-        outline: 2px solid #003300;
-        outline-offset: 2px;
-    }
-
     /* Responsive */
     @media (max-width: 650px) {
         main.container {
             margin: 90px 12px 30px;
-            padding: 20
+            padding: 20px 20px;
+        }
+        form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        label, input, button {
+            flex: none;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+        button {
+            margin-top: 8px;
+        }
+        thead th {
+            font-size: 0.85rem;
+            padding: 10px 6px;
+        }
+        tbody td {
+            font-size: 0.9rem;
+            padding: 8px 5px;
+        }
+        .next-class-info {
+            font-size: 1rem;
+            padding: 16px;
+        }
+        header {
+            font-size: 1.4rem;
+            padding: 15px 0;
+        }
+    }
+</style>
+</head>
+<body>
+
+<header>🚀 Student Timetable Portal</header>
+
+<main class="container">
+    <form method="GET" action="/">
+        <label for="student_id">Enter Student ID:</label>
+        <input type="text" id="student_id" name="student_id" placeholder="e.g. SAY0023" value="{{ selected_student }}" required autocomplete="off" />
+        <button type="submit">View Timetable</button>
+    </form>
+
+    {% if not_found %}
+        <p class="not-found">No timetable found for this student ID.</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    {% for slot in time_slots %}
+                        <th>{{ slot }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for day, classes in timetable %}
+                    <tr>
+                        <td><strong>{{ day }}</strong></td>
+                        {% for subject in classes %}
+                            <td>{{ subject }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if next_class %}
+        <div class="next-class-info" tabindex="0" aria-live="polite" aria-atomic="true">
+            <p>Next Class: <strong>{{ next_class.subject }}</strong> at <strong>{{ next_class.time_slot }}</strong></p>
+            <p>Time until class: <strong>{{ next_class.time_until }}</strong></p>
+            <p>Reminder set for: <strong>{{ next_class.reminder_time }}</strong></p>
+        </div>
+    {% endif %}
+</main>
+
+</body>
+</html>
