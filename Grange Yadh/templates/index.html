@@ -5,7 +5,6 @@
     <title>Student Timetable</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-        /* --- General styles --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1e3c72, #2a5298);
@@ -77,7 +76,6 @@
             color: white;
         }
 
-        /* Table styling */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -116,7 +114,6 @@
             user-select: none;
         }
 
-        /* Reminder banner */
         #reminder-banner {
             display: none;
             position: fixed;
@@ -144,7 +141,6 @@
             user-select: none;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             input[type="text"] {
                 width: 100%;
@@ -205,4 +201,41 @@
 
         {% if next_class %}
             <div class="next-class-info" id="next-class-info">
-                <p><
+                <p>📚 <strong>Next Class:</strong> {{ next_class.subject }}</p>
+                <p>⏰ <strong>Time:</strong> {{ next_class.time_slot }}</p>
+                <p>🕒 <strong>Starts in:</strong> {{ next_class.time_until }}</p>
+                <p>🔔 <strong>Reminder at:</strong> {{ next_class.reminder_time }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="reminder-banner">
+        ⏳ Reminder: Your next class "<span id="reminder-subject"></span>" starts soon!
+        <button onclick="dismissReminder()">Dismiss</button>
+    </div>
+
+    <script>
+        function dismissReminder() {
+            document.getElementById('reminder-banner').style.display = 'none';
+        }
+
+        {% if next_class %}
+            const reminderTime = "{{ next_class.class_start_iso }}";
+            const subject = "{{ next_class.subject }}";
+
+            function checkReminder() {
+                const now = new Date();
+                const reminder = new Date(reminderTime);
+                reminder.setMinutes(reminder.getMinutes() - 5);
+
+                if (now >= reminder && now <= new Date(reminderTime)) {
+                    document.getElementById("reminder-subject").innerText = subject;
+                    document.getElementById("reminder-banner").style.display = "block";
+                }
+            }
+
+            setInterval(checkReminder, 30000); // Check every 30 seconds
+        {% endif %}
+    </script>
+</body>
+</html>
